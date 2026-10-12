@@ -351,7 +351,8 @@ private fun ScanDockButton(backdrop: Backdrop, onClick: () -> Unit) {
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_nav_scan),
-            contentDescription = "扫一扫"
+            contentDescription = "扫一扫",
+            modifier = Modifier.size(22.dp)
         )
     }
 }
