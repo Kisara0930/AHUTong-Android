@@ -216,7 +216,7 @@ private fun BoxScope.RadiantBottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(vertical = 20.dp)
+                .padding(vertical = if (scanEnabled) 20.dp else 16.dp)
                 .navigationBarsPadding()
                 .then(if (scanEnabled) Modifier.padding(horizontal = 28.dp) else Modifier),
             verticalAlignment = Alignment.CenterVertically
@@ -229,6 +229,7 @@ private fun BoxScope.RadiantBottomNavBar(
                 onCurrentTabTapped = { selectedRoute?.let(::select) },
                 backdrop = backdrop,
                 tabsCount = destinations.size,
+                compact = scanEnabled,
                 modifier = Modifier
                     .then(
                         if (scanEnabled) Modifier.weight(1f)
@@ -245,9 +246,13 @@ private fun BoxScope.RadiantBottomNavBar(
                         Icon(
                             painter = painterResource(destination.iconId),
                             contentDescription = destination.label,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(if (scanEnabled) 20.dp else 24.dp)
                         )
-                        Text(destination.label, style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            destination.label,
+                            style = if (scanEnabled) MaterialTheme.typography.labelSmall
+                            else MaterialTheme.typography.labelMedium
+                        )
                     }
                 }
             }
@@ -512,7 +517,7 @@ private fun BoxScope.ClassicBottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(vertical = 20.dp)
+                .padding(vertical = if (scanEnabled) 20.dp else 16.dp)
                 .navigationBarsPadding()
         ) {
             LiquidBottomTabs(
@@ -525,6 +530,7 @@ private fun BoxScope.ClassicBottomNavBar(
                 },
                 backdrop = backdrop,
                 tabsCount = destinations.size + scanOffset,
+                compact = scanEnabled,
                 modifier = Modifier
                     .padding(horizontal = 36.dp)
                     .onGloballyPositioned { onTabsBounds(it.boundsInWindow()) }
@@ -542,9 +548,13 @@ private fun BoxScope.ClassicBottomNavBar(
                                 destination.unselectedIcon
                             },
                             contentDescription = destination.label,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(if (scanEnabled) 20.dp else 24.dp)
                         )
-                        Text(destination.label, style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            destination.label,
+                            style = if (scanEnabled) MaterialTheme.typography.labelSmall
+                            else MaterialTheme.typography.labelMedium
+                        )
                     }
                 }
                 if (scanEnabled) {

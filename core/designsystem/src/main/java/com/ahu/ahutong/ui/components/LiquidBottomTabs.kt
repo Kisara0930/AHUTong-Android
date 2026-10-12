@@ -69,6 +69,8 @@ fun LiquidBottomTabs(
     tabsCount: Int,
     modifier: Modifier = Modifier,
     onCurrentTabTapped: (() -> Unit)? = null,
+    /** 紧凑一档：整舱矮 8dp（56+48），供导航栏同排挂等高圆钮时使用；false = 原来的 64/56。 */
+    compact: Boolean = false,
     content: @Composable RowScope.() -> Unit
 ) {
     val tokens = LocalLiquidGlassTokens.current
@@ -116,14 +118,14 @@ fun LiquidBottomTabs(
 
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
         val animationScope = rememberCoroutineScope()
-        val dampedDragAnimation = remember(animationScope, isLiquid, tabsCount, tabWidth, isLtr) {
+        val dampedDragAnimation = remember(animationScope, isLiquid, tabsCount, tabWidth, isLtr, compact) {
             DampedDragAnimation(
                 animationScope = animationScope,
                 initialValue = selectedTabIndex().toFloat(),
                 valueRange = 0f..(tabsCount - 1).toFloat(),
                 visibilityThreshold = 0.001f,
                 initialScale = 1f,
-                pressedScale = 70f / 48f,
+                pressedScale = if (compact) 70f / 48f else 78f / 56f,
                 userDragEnabled = isLiquid,
                 onDragStarted = {},
                 onDragStopped = {
@@ -205,7 +207,7 @@ fun LiquidBottomTabs(
                     onDrawSurface = { drawRect(containerColor) }
                 )
                 .then(interactiveHighlight.modifier)
-                .height(56f.dp)
+                .height(if (compact) 56f.dp else 64f.dp)
                 .fillMaxWidth()
                 .padding(4f.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -255,7 +257,7 @@ fun LiquidBottomTabs(
                         onDrawSurface = { drawRect(containerColor) }
                     )
                     .then(interactiveHighlight.modifier)
-                    .height(48f.dp)
+                    .height(if (compact) 48f.dp else 56f.dp)
                     .fillMaxWidth()
                     .padding(horizontal = 4f.dp)
                     .graphicsLayer(colorFilter = ColorFilter.tint(accentColor)),
@@ -353,7 +355,7 @@ fun LiquidBottomTabs(
                         }
                     }
                 )
-                .height(48f.dp)
+                .height(if (compact) 48f.dp else 56f.dp)
                 .fillMaxWidth(1f / tabsCount)
         )
     }
