@@ -54,6 +54,10 @@ class PreferencesViewModel @Inject constructor(
     private val _canteenUploadConsent = MutableStateFlow<Boolean?>(null)
     val canteenUploadConsent: StateFlow<Boolean?> = _canteenUploadConsent.asStateFlow()
 
+    /** 导航栏「一键扫码」入口开关（默认开，非三态：这一项不弹窗询问，只有开/关）。 */
+    private val _scanShortcutEnabled = MutableStateFlow(true)
+    val scanShortcutEnabled: StateFlow<Boolean> = _scanShortcutEnabled.asStateFlow()
+
     private val _predictivePrefetchEnabled = MutableStateFlow<Boolean?>(null)
     val predictivePrefetchEnabled: StateFlow<Boolean?> = _predictivePrefetchEnabled.asStateFlow()
 
@@ -137,6 +141,7 @@ class PreferencesViewModel @Inject constructor(
     init {
         viewModelScope.launch { settings.personalizationEnabled.collect { _personalizationEnabled.value = it } }
         viewModelScope.launch { settings.canteenUploadConsent.collect { _canteenUploadConsent.value = it } }
+        viewModelScope.launch { settings.scanShortcutEnabled.collect { _scanShortcutEnabled.value = it } }
         viewModelScope.launch { settings.predictivePrefetchEnabled.collect { _predictivePrefetchEnabled.value = it } }
         viewModelScope.launch { settings.wifiOnlyPrefetch.collect { _wifiOnlyPrefetch.value = it } }
         viewModelScope.launch { settings.behaviorRetentionDays.collect { _behaviorRetentionDays.value = it } }
@@ -206,6 +211,12 @@ class PreferencesViewModel @Inject constructor(
     fun setCanteenUploadConsent(value: Boolean) {
         writeSetting {
             settings.setCanteenUploadConsent(value)
+        }
+    }
+
+    fun setScanShortcutEnabled(value: Boolean) {
+        writeSetting {
+            settings.setScanShortcutEnabled(value)
         }
     }
 

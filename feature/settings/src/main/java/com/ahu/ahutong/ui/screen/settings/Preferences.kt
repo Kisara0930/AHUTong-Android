@@ -87,6 +87,7 @@ fun Preferences(
     val showQRCode by viewModel.showQRCode.collectAsState()
     val personalizationEnabled by viewModel.personalizationEnabled.collectAsState()
     val canteenUploadConsent by viewModel.canteenUploadConsent.collectAsState()
+    val scanShortcutEnabled by viewModel.scanShortcutEnabled.collectAsState()
     val predictivePrefetchEnabled by viewModel.predictivePrefetchEnabled.collectAsState()
     val wifiOnlyPrefetch by viewModel.wifiOnlyPrefetch.collectAsState()
     val behaviorRetentionDays by viewModel.behaviorRetentionDays.collectAsState()
@@ -171,6 +172,14 @@ fun Preferences(
                         onHorizontalDragActiveChange = onToggleHorizontalDragActiveChange
                     )
                 }
+                SettingsToggleRow(
+                    title = "导航栏扫码入口",
+                    subtitle = "在底部导航栏显示一键扫码按钮",
+                    selected = scanShortcutEnabled,
+                    onSelectedChange = viewModel::setScanShortcutEnabled,
+                    backdrop = backdrop,
+                    onHorizontalDragActiveChange = onToggleHorizontalDragActiveChange
+                )
                 val predictiveEnabled = predictivePrefetchEnabled
                 val wifiOnly = wifiOnlyPrefetch
                 if (predictiveEnabled != null && wifiOnly != null) {

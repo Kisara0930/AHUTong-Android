@@ -44,6 +44,7 @@ object PreferencesKeys {
     val THEME_MODE = stringPreferencesKey("theme_mode")
     val REPOSITORY_ACCELERATION_SOURCE = stringPreferencesKey("repository_acceleration_source")
     val PERSONALIZATION_ENABLED = booleanPreferencesKey("personalization_enabled")
+    val SCAN_SHORTCUT_ENABLED = booleanPreferencesKey("scan_shortcut_enabled")
     val CANTEEN_UPLOAD_CONSENT = booleanPreferencesKey("canteen_upload_consent")
 
     /** 众包补标注的匿名上报 token（随机 UUID，只用于同人去重）。 */
@@ -167,6 +168,14 @@ class PreferencesManager @Inject constructor(@param:ApplicationContext private v
 
     override suspend fun setPersonalizationEnabled(value: Boolean) {
         editPreferences { it[PreferencesKeys.PERSONALIZATION_ENABLED] = value }
+    }
+
+    // 纯界面开关：读失败时保持"显示"（不必像隐私开关那样倒向保守侧）
+    override val scanShortcutEnabled: Flow<Boolean> =
+        preferences { prefs -> prefs[PreferencesKeys.SCAN_SHORTCUT_ENABLED] ?: true }
+
+    override suspend fun setScanShortcutEnabled(value: Boolean) {
+        editPreferences { it[PreferencesKeys.SCAN_SHORTCUT_ENABLED] = value }
     }
 
     override val predictivePrefetchEnabled: Flow<Boolean> =
