@@ -162,15 +162,14 @@ fun BoxScope.BottomNavBar(
         tabsBounds?.let { bounds ->
             val visibleRoutes = classicDestinations.map { it.route }
                 .filter { com.ahu.ahutong.data.dao.AHUCache.canOpenRoute(it) }
-            // 扫码入口在 Classic / Radiant-非液态下是栏内最左的一个"项"，会把「学小通」在栏内
-            // 的位置整体右移一格；Radiant 液态下它是栏外的独立圆钮，不计入栏内项数。
-            val scanAsItem = scanEnabled && !(isRadiantUi && LocalIsLiquidGlassEnabled.current)
+            // 扫码入口在 Classic / Radiant-非液态下是栏内**最右**的一个"项"（排在设置之后，
+            // 不影响「学小通」的索引，只让栏内项数 +1）；Radiant 液态下它是栏外的独立圆钮，不计入。
+            val scanInBar = scanEnabled && !(isRadiantUi && LocalIsLiquidGlassEnabled.current)
             XuexiaotongTabGuide(
                 backdrop = backdrop,
                 bounds = bounds,
-                anchorIndex = visibleRoutes.indexOf("xuexiaotong").coerceAtLeast(0) +
-                    if (scanAsItem) 1 else 0,
-                anchorCount = visibleRoutes.size + if (scanAsItem) 1 else 0,
+                anchorIndex = visibleRoutes.indexOf("xuexiaotong").coerceAtLeast(0),
+                anchorCount = visibleRoutes.size + if (scanInBar) 1 else 0,
                 onDismiss = { dismissGuide() }
             )
         }
@@ -245,9 +244,10 @@ private fun BoxScope.RadiantBottomNavBar(
                     ) {
                         Icon(
                             painter = painterResource(destination.iconId),
-                            contentDescription = destination.label
+                            contentDescription = destination.label,
+                            modifier = Modifier.size(20.dp)
                         )
-                        Text(destination.label, style = MaterialTheme.typography.labelMedium)
+                        Text(destination.label, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -265,20 +265,6 @@ private fun BoxScope.RadiantBottomNavBar(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             tonalElevation = 0.dp
         ) {
-            if (scanEnabled) {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onScanClick,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.QrCodeScanner,
-                            contentDescription = "扫一扫"
-                        )
-                    },
-                    label = { Text("扫码") },
-                    colors = appNavigationBarItemColors()
-                )
-            }
             destinations.forEach { destination ->
                 val selected = selectedRoute == destination.route
                 NavigationBarItem(
@@ -291,6 +277,20 @@ private fun BoxScope.RadiantBottomNavBar(
                         )
                     },
                     label = { Text(destination.label) },
+                    colors = appNavigationBarItemColors()
+                )
+            }
+            if (scanEnabled) {
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onScanClick,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Outlined.QrCodeScanner,
+                            contentDescription = "扫一扫"
+                        )
+                    },
+                    label = { Text("扫码") },
                     colors = appNavigationBarItemColors()
                 )
             }
@@ -318,7 +318,7 @@ private fun ScanDockButton(backdrop: Backdrop, onClick: () -> Unit) {
     }
     Box(
         modifier = Modifier
-            .size(64.dp)
+            .size(56.dp)
             .drawBackdrop(
                 backdrop = backdrop,
                 shape = { ContinuousCapsule },
@@ -506,7 +506,7 @@ private fun BoxScope.ClassicBottomNavBar(
     if (selectedRoute !in destinations.map { it.route }) return
 
     if (LocalIsLiquidGlassEnabled.current) {
-        // 经典主题 + 液态玻璃开关：扫码当作最左的一个 tab 项（与 Material/Miuix 同处理）
+        // 经典主题 + 液态玻璃开关：扫码作为最右的一个 tab 项（与 Material/Miuix 同处理）
         val scanOffset = if (scanEnabled) 1 else 0
         Row(
             modifier = Modifier
@@ -517,11 +517,11 @@ private fun BoxScope.ClassicBottomNavBar(
         ) {
             LiquidBottomTabs(
                 selectedTabIndex = {
-                    destinations.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0) + scanOffset
+                    destinations.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0)
                 },
                 onTabSelected = { index ->
-                    if (scanEnabled && index == 0) onScanClick()
-                    else select(destinations[index - scanOffset].route)
+                    if (scanEnabled && index == destinations.size) onScanClick()
+                    else select(destinations[index].route)
                 },
                 backdrop = backdrop,
                 tabsCount = destinations.size + scanOffset,
@@ -529,12 +529,6 @@ private fun BoxScope.ClassicBottomNavBar(
                     .padding(horizontal = 36.dp)
                     .onGloballyPositioned { onTabsBounds(it.boundsInWindow()) }
             ) {
-                if (scanEnabled) {
-                    LiquidBottomTab(selected = false, onClick = onScanClick) {
-                        Icon(Icons.Outlined.QrCodeScanner, contentDescription = "扫一扫")
-                        Text("扫码", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
                 destinations.forEach { destination ->
                     val selected = selectedRoute == destination.route
                     LiquidBottomTab(
@@ -547,9 +541,20 @@ private fun BoxScope.ClassicBottomNavBar(
                             } else {
                                 destination.unselectedIcon
                             },
-                            contentDescription = destination.label
+                            contentDescription = destination.label,
+                            modifier = Modifier.size(20.dp)
                         )
-                        Text(destination.label, style = MaterialTheme.typography.labelMedium)
+                        Text(destination.label, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                if (scanEnabled) {
+                    LiquidBottomTab(selected = false, onClick = onScanClick) {
+                        Icon(
+                            imageVector = Icons.Outlined.QrCodeScanner,
+                            contentDescription = "扫一扫",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text("扫码", style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -558,11 +563,7 @@ private fun BoxScope.ClassicBottomNavBar(
         val selectedIndex = destinations
             .indexOfFirst { it.route == selectedRoute }
             .coerceAtLeast(0)
-        val scanOffset = if (scanEnabled) 1 else 0
         val items = buildList {
-            if (scanEnabled) {
-                add(MiuixNavigationItem(label = "扫码", icon = Icons.Outlined.QrCodeScanner))
-            }
             destinations.forEachIndexed { index, destination ->
                 add(
                     MiuixNavigationItem(
@@ -575,13 +576,16 @@ private fun BoxScope.ClassicBottomNavBar(
                     )
                 )
             }
+            if (scanEnabled) {
+                add(MiuixNavigationItem(label = "扫码", icon = Icons.Outlined.QrCodeScanner))
+            }
         }
         MiuixNavigationBar(
             items = items,
-            selected = selectedIndex + scanOffset,
+            selected = selectedIndex,
             onClick = { index ->
-                if (scanEnabled && index == 0) onScanClick()
-                else select(destinations[index - scanOffset].route)
+                if (scanEnabled && index == destinations.size) onScanClick()
+                else select(destinations[index].route)
             },
             color = if (wallpaperEnabled) Color.Transparent else MiuixTheme.colorScheme.surface,
             modifier = Modifier
@@ -606,20 +610,6 @@ private fun BoxScope.ClassicBottomNavBar(
             containerColor = if (wallpaperEnabled) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
             tonalElevation = 0.dp
         ) {
-            if (scanEnabled) {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onScanClick,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.QrCodeScanner,
-                            contentDescription = "扫一扫"
-                        )
-                    },
-                    label = { Text("扫码") },
-                    colors = appNavigationBarItemColors()
-                )
-            }
             destinations.forEach { destination ->
                 val selected = selectedRoute == destination.route
                 NavigationBarItem(
@@ -636,6 +626,20 @@ private fun BoxScope.ClassicBottomNavBar(
                         )
                     },
                     label = { Text(destination.label) },
+                    colors = appNavigationBarItemColors()
+                )
+            }
+            if (scanEnabled) {
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onScanClick,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Outlined.QrCodeScanner,
+                            contentDescription = "扫一扫"
+                        )
+                    },
+                    label = { Text("扫码") },
                     colors = appNavigationBarItemColors()
                 )
             }
