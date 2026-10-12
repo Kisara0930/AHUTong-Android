@@ -21,15 +21,16 @@ val buglyAppId = providers.gradleProperty("bugly.appId").orNull
     ?: providers.environmentVariable("BUGLY_APP_ID").orNull
     ?: "2c2ccadcad"
 
-// 必吃榜写入密钥：**不是公开标识**，所以这里**不写默认值**。
-// 来源优先级：-Pcanteen.writeKey=... → 环境变量 CANTEEN_WRITE_KEY → local.properties。
-// 三者都缺时为 ""，此时客户端不带该头（写接口会 401，日志会明确提示）。
+// 必吃榜写入密钥。**内测期随仓库提供默认值**：正式发版由固定的人从干净 clone / CI 构建，
+// 那里没有 local.properties，默认空串会让 release 端上传 401、众包卡片不出现（2026-10-11 实测）。
+// 该密钥随 APK 分发、本就可被提取，内测期按「公开标识」对待；备案完成切到自有域名 API 后再收口。
+// 覆盖优先级：-Pcanteen.writeKey=... → 环境变量 CANTEEN_WRITE_KEY → local.properties。
 val canteenWriteKey: String = providers.gradleProperty("canteen.writeKey").orNull
     ?: providers.environmentVariable("CANTEEN_WRITE_KEY").orNull
     ?: rootProject.file("local.properties").takeIf { it.exists() }?.let { f ->
         Properties().apply { f.inputStream().use { load(it) } }.getProperty("canteen.writeKey")
     }
-    ?: ""
+    ?: "cd665474e3b5fff42a23f9fe5d2e6a8cf57201e4d5990c0d"
 
 sentry {
     org.set("openahu")
