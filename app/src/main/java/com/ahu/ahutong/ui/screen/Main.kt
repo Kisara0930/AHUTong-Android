@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import com.ahu.ahutong.ui.screen.scan.QrRouter
 import com.ahu.ahutong.ui.screen.scan.ScanOverlay
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -750,7 +751,28 @@ fun Main(
             exit = fadeOut(tween(120)) + scaleOut(tween(120), targetScale = 0.96f)
         ) {
             ScanOverlay(
-                onDecoded = { /* TODO(下一步)：classify + 显式 Intent 直启三平台 */ },
+                onDecoded = { raw ->
+                    when (val outcome = QrRouter.route(context, raw)) {
+                        is QrRouter.Outcome.Handed -> {
+                            outcome.note?.let {
+                                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                            }
+                            scanOpen = false
+                        }
+
+                        is QrRouter.Outcome.TargetMissing -> Toast.makeText(
+                            context,
+                            "未安装「${outcome.targetApp}」，或它没有响应",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        QrRouter.Outcome.Unrecognized -> Toast.makeText(
+                            context,
+                            "这张码不能直达（原文已显示在卡片里）",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
                 onClose = { scanOpen = false }
             )
         }
