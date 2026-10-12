@@ -350,9 +350,8 @@ private fun ScanDockButton(backdrop: Backdrop, onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.Outlined.QrCodeScanner,
-            contentDescription = "扫一扫",
-            tint = MaterialTheme.colorScheme.primary
+            painter = painterResource(R.drawable.ic_nav_scan),
+            contentDescription = "扫一扫"
         )
     }
 }
