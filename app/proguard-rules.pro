@@ -84,6 +84,13 @@
 # minified builds. Keep the complete contracts so Review/Release authentication behaves like Debug.
 -keep class com.ahu.ahutong.data.crawler.model.** { *; }
 
+# 必吃榜（canteen）是 Gson/Retrofit 线上契约：字段名即 JSON 键名，在 -repackageclasses + R8
+# full mode 下会被混淆成 a/b/c，类还会被合并（2026-10-13 主工程 release mapping 实测：
+# TxnEntry.terminal -> a、WindowReportBody.terminal -> a、WindowMapResponse 无条目）。
+# 结果：入站解析成空对象、出站键名全错——上传被服务端当空批吞掉、窗口名上报因缺 terminal 直接
+# 422。整包保留，以后新增模型不必再逐条补规则。
+-keep class com.ahu.ahutong.data.canteen.** { *; }
+
 # Gson records for encrypted, per-account GMIS timetable and term caches.
 -keep class com.ahu.ahutong.data.schedule.gmis.GmisTerm { *; }
 -keep class com.ahu.ahutong.data.schedule.gmis.GmisCourse { *; }
