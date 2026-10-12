@@ -210,13 +210,7 @@
 -keep class com.ahu.ahutong.data.weather.** { *; }
 -keep interface com.ahu.ahutong.data.weather.WeatherApi { *; }
 
-# Canteen DTOs are Retrofit/Gson wire contracts. Preserve concrete model classes, field names,
-# and generic element types so R8 cannot merge/remove models used only through reflection.
--keep class com.ahu.ahutong.data.canteen.Insight* { *; }
--keep class com.ahu.ahutong.data.canteen.WindowMap* { *; }
--keep class com.ahu.ahutong.data.canteen.Txn* { *; }
--keep class com.ahu.ahutong.data.canteen.WindowReportBody { *; }
--keep interface com.ahu.ahutong.data.canteen.CanteenApi { *; }
+# 必吃榜 canteen 的 keep 规则见文件上方（包级 `data.canteen.**`），此处不再重复列举。
 
 # Repository index and local download records are read by Gson reflection. Keep their concrete
 # classes and fields so R8 cannot merge the index entries or discard fields used only by Gson.
