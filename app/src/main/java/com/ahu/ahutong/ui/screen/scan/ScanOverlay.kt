@@ -42,7 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -87,11 +87,11 @@ fun ScanOverlay(
     }
 
     Box(modifier.fillMaxSize()) {
-        // 遮罩：点空白处关闭
+        // 只留「点空白关闭」的透明层：不再压暗整页——压暗层会跟着缩放动画一起放大，
+        // 过程里能看见它的边界。分离感改由弹窗自身的阴影提供（见下方 shadow）。
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -106,12 +106,16 @@ fun ScanOverlay(
                 .align(Alignment.Center)
                 .padding(horizontal = 24.dp)
                 .fillMaxWidth()
+                // 自阴影：围绕弹窗自己的形状给一圈投影，代替压暗整页
+                .shadow(elevation = 24.dp, shape = shape, clip = false)
                 .then(
                     if (isLiquid) {
                         Modifier.liquidGlassSurface(
                             backdrop = LocalLiquidGlassAmbientBackdrop.current,
                             shape = shape,
-                            surfaceColor = liquidGlassTint()
+                            surfaceColor = liquidGlassTint(),
+                            // 阴影已由上面的 shadow 统一负责，避免叠两层
+                            shadowRadius = 0.dp
                         )
                     } else {
                         Modifier
