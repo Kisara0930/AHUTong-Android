@@ -311,6 +311,7 @@ fun Main(
         homeEditGrayState = GrayReleaseManager.state(GrayFeatures.HomeEdit, context)
     }
 
+    val scanShortcutEnabled by mainViewModel.scanShortcutEnabled.collectAsState()
     val backgroundRevision by HomeBackgroundStore.revision.collectAsState()
     val appBackground = remember(backgroundRevision) {
         if (HomeBackgroundStore.isEnabled) {
@@ -725,6 +726,10 @@ fun Main(
             selectedRoute = currentRoute,
             onDestinationSelected = { route ->
                 scope.launch { selectPrimaryDestination(route) }
+            },
+            scanEnabled = scanShortcutEnabled,
+            onScanClick = {
+                Toast.makeText(context, "扫一扫开发中", Toast.LENGTH_SHORT).show()
             }
         )
         }

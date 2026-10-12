@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import com.ahu.ahutong.BuildConfig
+import com.ahu.ahutong.core.storage.SettingsStore
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import com.ahu.ahutong.data.update.ApkDownloadEvent
 import com.ahu.ahutong.data.update.ApkUpdateChecker
 import com.ahu.ahutong.data.update.UpdateCheck
@@ -21,8 +25,13 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val downloader: ApkDownloader,
-    private val updateChecker: ApkUpdateChecker
+    private val updateChecker: ApkUpdateChecker,
+    private val settings: SettingsStore
 ) : ViewModel() {
+
+    /** 导航栏「一键扫码」入口开关（默认开；设置→偏好里可关，关掉即回到没有该按钮的原状）。 */
+    val scanShortcutEnabled: StateFlow<Boolean> = settings.scanShortcutEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     init {
         // 下载器说的话翻译成界面状态：这里只做映射，规则（校验、镜像、重定向）都在 :data:update 里。
