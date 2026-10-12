@@ -5,7 +5,15 @@ import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import com.ahu.ahutong.data.model.AppUiTheme
 import com.ahu.ahutong.BuildConfig
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import com.ahu.ahutong.ui.screen.scan.ScanOverlay
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -312,6 +320,8 @@ fun Main(
     }
 
     val scanShortcutEnabled by mainViewModel.scanShortcutEnabled.collectAsState()
+    // 一键扫码浮层（同页弹窗，不跳导航页）
+    var scanOpen by remember { mutableStateOf(false) }
     val backgroundRevision by HomeBackgroundStore.revision.collectAsState()
     val appBackground = remember(backgroundRevision) {
         if (HomeBackgroundStore.isEnabled) {
@@ -728,10 +738,21 @@ fun Main(
                 scope.launch { selectPrimaryDestination(route) }
             },
             scanEnabled = scanShortcutEnabled,
-            onScanClick = {
-                Toast.makeText(context, "扫一扫开发中", Toast.LENGTH_SHORT).show()
-            }
+            onScanClick = { scanOpen = true }
         )
+        }
+
+        // 一键扫码：同页浮层（不跳导航页）。这里只把原文收下，分类与显式 Intent 直启下一步接。
+        BackHandler(enabled = scanOpen) { scanOpen = false }
+        AnimatedVisibility(
+            visible = scanOpen,
+            enter = fadeIn(tween(150)) + scaleIn(tween(150), initialScale = 0.94f),
+            exit = fadeOut(tween(120)) + scaleOut(tween(120), targetScale = 0.96f)
+        ) {
+            ScanOverlay(
+                onDecoded = { /* TODO(下一步)：classify + 显式 Intent 直启三平台 */ },
+                onClose = { scanOpen = false }
+            )
         }
         val productUiBlocked = !canUseBusinessPages || effectiveRoute == "login" || effectiveRoute == "setup" ||
             effectiveRoute == "splash" || effectiveRoute?.contains("deposit") == true ||
