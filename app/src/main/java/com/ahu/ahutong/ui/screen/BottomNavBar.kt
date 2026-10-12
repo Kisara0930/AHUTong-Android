@@ -216,7 +216,7 @@ private fun BoxScope.RadiantBottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(vertical = 16.dp)
+                .padding(vertical = 20.dp)
                 .navigationBarsPadding()
                 .then(if (scanEnabled) Modifier.padding(horizontal = 28.dp) else Modifier),
             verticalAlignment = Alignment.CenterVertically
@@ -512,7 +512,7 @@ private fun BoxScope.ClassicBottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(vertical = 16.dp)
+                .padding(vertical = 20.dp)
                 .navigationBarsPadding()
         ) {
             LiquidBottomTabs(
