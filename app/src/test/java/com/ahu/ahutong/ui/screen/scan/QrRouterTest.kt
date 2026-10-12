@@ -1,0 +1,71 @@
+package com.ahu.ahutong.ui.screen.scan
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+/** 分类规则按《聚合扫码 · 三平台实现手册》的真机样本钉住。 */
+class QrRouterTest {
+
+    @Test
+    fun chaoxingSignByPrefix() {
+        assertEquals(
+            QrRouter.Kind.ChaoxingSign,
+            QrRouter.classify(
+                "https://mobilelearn.chaoxing.com/widget/sign/e?id=1&c=2&enc=ab" +
+                    "&DB_STRATEGY=PRIMARY_KEY&STRATEGY_PARA=id"
+            )
+        )
+        // 路径段随签到类型变，前缀匹配要能吃到 pcqrcode
+        assertEquals(
+            QrRouter.Kind.ChaoxingSign,
+            QrRouter.classify("http://mobilelearn.chaoxing.com/widget/sign/pcqrcode?x=1")
+        )
+    }
+
+    @Test
+    fun yuketangBySchoolSubdomain() {
+        assertEquals(
+            QrRouter.Kind.YuketangSign,
+            QrRouter.classify(
+                "https://changjiang.yuketang.cn/api/v3/lesson/check-in/dynamic-qr-code?c=1&t=2&s=3&v=2"
+            )
+        )
+        assertEquals(QrRouter.Kind.YuketangSign, QrRouter.classify("https://yuketang.cn/x"))
+    }
+
+    @Test
+    fun mobikeByUrlShortLinkAndPlate() {
+        assertEquals(
+            QrRouter.Kind.MeituanBike,
+            QrRouter.classify("https://www.mobike.com/download/app.html?b=8661234567_1")
+        )
+        assertEquals(QrRouter.Kind.MeituanBike, QrRouter.classify("http://t8.pub/abcd"))
+        assertEquals(QrRouter.Kind.MeituanBike, QrRouter.classify("http://t9.pub/abcd"))
+        assertEquals(QrRouter.Kind.MeituanBike, QrRouter.classify("8701234567"))
+    }
+
+    @Test
+    fun rejectsTenCharCouponInsteadOfTreatingAsPlate() {
+        // 手册里的宽松式 ^[0-9A-Z]{10}$ 会命中它；收紧成前缀白名单后必须不认
+        assertEquals(QrRouter.Kind.Unknown, QrRouter.classify("AB12CD34EF"))
+        assertEquals(QrRouter.Kind.Unknown, QrRouter.classify("8611234567"))
+    }
+
+    @Test
+    fun rejectsMobikeHostWithMalformedBikeParam() {
+        assertEquals(
+            QrRouter.Kind.Unknown,
+            QrRouter.classify("https://www.mobike.com/download/app.html?b=oops")
+        )
+        assertEquals(
+            QrRouter.Kind.Unknown,
+            QrRouter.classify("https://www.mobike.com/other/path?b=8661234567_1")
+        )
+    }
+
+    @Test
+    fun rejectsUnrelatedText() {
+        assertEquals(QrRouter.Kind.Unknown, QrRouter.classify("https://example.com/x"))
+        assertEquals(QrRouter.Kind.Unknown, QrRouter.classify(""))
+    }
+}
