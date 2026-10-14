@@ -84,6 +84,9 @@ import com.ahu.ahutong.ui.screen.main.RepositorySettings
 import com.ahu.ahutong.ui.screen.main.Weather
 import com.ahu.ahutong.ui.screen.xuexiaotong.XuexiaotongScreen
 import com.ahu.ahutong.ui.screen.settings.Contributors
+import com.ahu.ahutong.ui.screen.settings.EarlyAccessScreen
+import com.ahu.ahutong.ui.screen.settings.EarlyAccessInvitationHost
+import com.ahu.ahutong.data.preview.EarlyAccessManager
 import com.ahu.ahutong.ui.screen.settings.Debug
 import com.ahu.ahutong.ui.screen.settings.PrivacyPolicyScreen
 import com.ahu.ahutong.ui.screen.settings.License
@@ -188,6 +191,10 @@ fun Main(
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
     val sessionStatus by AhuSessionState.status.collectAsState()
+    val earlyAccessState by EarlyAccessManager.state.collectAsState()
+    LaunchedEffect(earlyAccessState.subject, earlyAccessState.joined) {
+        mainViewModel.onUpdateChannelChanged()
+    }
     val authenticationRequired by LoginNavigationGate.authenticationRequired.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     var sessionCheckRevision by remember { mutableIntStateOf(0) }
@@ -585,6 +592,9 @@ fun Main(
                     scheduleViewModel = scheduleViewModel
                 )
             }
+            animatedComposable("settings__early_access") {
+                EarlyAccessScreen(onBack = { navController.popBackStack() })
+            }
             animatedComposable("settings__privacy_policy") {
                 val res = LocalContext.current.resources
                 val policyMarkdown by produceState<String?>(null) {
@@ -720,6 +730,13 @@ fun Main(
             effectiveRoute?.contains("recharge") == true ||
             effectiveRoute in setOf("electricity_pay", "electricity_recent_rooms", "electricity_alert_settings") ||
             isReLoginShown || suggestionOverlayBlocked || imeVisible
+        EarlyAccessInvitationHost(
+            eligible = canUseBusinessPages && currentRoute == "home" &&
+                AHUCache.isPrivacyAccepted() && AHUCache.isAgreementAccepted() &&
+                AHUCache.isBusinessAccepted() && !productUiBlocked &&
+                !mainViewModel.showApkUpdateDialog.value,
+            accountRevision = sessionCheckRevision
+        )
         SmartSuggestionHost(
             runtime = behaviorRuntime,
             backdrop = backdrop,
