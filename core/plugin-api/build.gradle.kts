@@ -37,6 +37,7 @@ android {
 dependencies {
     // 契约里出现 OkHttpClient 类型（HTTP 端口），只引 API 不构造（R8 规则：构造只在 :core:network）
     api(libs.okhttp)
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.runtime:runtime")
     implementation(libs.androidx.ui)

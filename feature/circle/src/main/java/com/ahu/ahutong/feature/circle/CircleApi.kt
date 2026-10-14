@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,25 +15,15 @@ import org.json.JSONObject
  * （Tenant 标识学校租户；该服务未提供其他第三方接入方式）。
  *
  * HTTP 入口是宿主提供的裸客户端（[OkHttpClient] 经契约传入），
- * 本类只在它上面叠自己的 Header 拦截器——不碰主 App 的任何会话。
+ * 本类只给请求加 BBS 所需的公开 Header，不碰主 App 的任何会话。
  */
 class CircleApi(baseClient: OkHttpClient) {
 
-    private val client = baseClient.newBuilder()
-        .addInterceptor { chain ->
-            chain.proceed(
-                chain.request().newBuilder()
-                    .header("Tenant", TENANT)
-                    .header("xweb_xhr", "1")
-                    .header("Referer", MINI_PROGRAM_REFERER)
-                    .header("User-Agent", DESKTOP_UA)
-                    .build()
-            )
-        }
-        .build()
+    private val client = baseClient
 
     /** 帖子列表（分页，页码从 1 开始）。 */
     suspend fun fetchTopics(page: Int): CircleTopicPage = withContext(Dispatchers.IO) {
+        require(page >= 1) { "页码必须从 1 开始" }
         val json = getJson("$BASE/api/client/topics?page=$page&pageSize=$PAGE_SIZE")
         val topics = extractArray(json).let { arr ->
             (0 until arr.length()).mapNotNull { parseTopic(arr.optJSONObject(it)) }
@@ -42,20 +33,30 @@ class CircleApi(baseClient: OkHttpClient) {
 
     /** 帖子详情（只读端点）。 */
     suspend fun fetchTopicDetail(id: String): CircleTopic = withContext(Dispatchers.IO) {
-        val json = getJson("$BASE/api/client/topics/read_only/$id")
+        val url = BASE.toHttpUrl().newBuilder().addPathSegments("api/client/topics/read_only")
+            .addPathSegment(id).build()
+        val json = getJson(url.toString())
         val obj = extractObject(json)
         parseTopic(obj) ?: throw CircleApiException("帖子详情解析失败")
     }
 
     /** 评论列表。 */
     suspend fun fetchComments(topicId: String): List<CircleComment> = withContext(Dispatchers.IO) {
-        val json = getJson("$BASE/api/client/comments?topic_id=$topicId&page=1&pageSize=100")
+        val url = BASE.toHttpUrl().newBuilder().addPathSegments("api/client/comments")
+            .addQueryParameter("topic_id", topicId).addQueryParameter("page", "1")
+            .addQueryParameter("pageSize", "100").build()
+        val json = getJson(url.toString())
         val arr = extractArray(json)
         (0 until arr.length()).mapNotNull { parseComment(arr.optJSONObject(it)) }
     }
 
     private fun getJson(url: String): JSONObject {
-        val request = Request.Builder().url(url).get().build()
+        val request = Request.Builder().url(url).get()
+            .header("Tenant", TENANT)
+            .header("xweb_xhr", "1")
+            .header("Referer", MINI_PROGRAM_REFERER)
+            .header("User-Agent", DESKTOP_UA)
+            .build()
         client.newCall(request).execute().use { response ->
             val body = response.body?.string().orEmpty()
             if (!response.isSuccessful) throw CircleApiException("HTTP ${response.code}")

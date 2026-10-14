@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 成绩页自己的标题。原来在 :app，只有这一处用它，因此随界面一起搬。 -->
+    <string name="grade">成绩单</string>
+    <string name="exam">考场查询</string>
+</resources>

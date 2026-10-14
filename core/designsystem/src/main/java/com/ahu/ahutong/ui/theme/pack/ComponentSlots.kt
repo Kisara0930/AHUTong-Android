@@ -55,11 +55,7 @@ enum class SlotSource(val storageKey: String, val displayName: String) {
 
     /** 该来源对应的整套组件包（槽位实现的供应方）。 */
     val pack: AppComponentPack
-        get() = when (this) {
-            MATERIAL -> MaterialComponentPack
-            MIUIX -> MiuixComponentPack
-            RADIANT -> RadiantComponentPack
-        }
+        get() = AppearanceRegistry.resolve(this)
 
     companion object {
         fun fromStorage(value: String?): SlotSource? = entries.firstOrNull { it.storageKey == value }

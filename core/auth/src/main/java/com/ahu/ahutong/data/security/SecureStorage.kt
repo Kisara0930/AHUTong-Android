@@ -49,9 +49,9 @@ object SecureStorage {
         }
     }
 
-    private fun encrypt(value: String): String {
+    private fun encrypt(value: String, secretKey: SecretKey = getOrCreateKey()): String {
         val cipher = Cipher.getInstance(TRANSFORMATION).apply {
-            init(Cipher.ENCRYPT_MODE, getOrCreateKey())
+            init(Cipher.ENCRYPT_MODE, secretKey)
         }
         val ciphertext = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
         return listOf(
@@ -59,6 +59,37 @@ object SecureStorage {
             Base64.encodeToString(cipher.iv, Base64.NO_WRAP),
             Base64.encodeToString(ciphertext, Base64.NO_WRAP)
         ).joinToString(":")
+    }
+
+    /** Migration must preserve the original ciphertext when its key cannot be opened. */
+    @Synchronized
+    fun getStringStrict(key: String): String? {
+        val encoded = preferences.getString(key, null) ?: return null
+        val parts = encoded.split(':', limit = 3)
+        require(parts.size == 3 && parts[0] == VERSION) { "Unsupported ciphertext; original data retained" }
+        val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val secret = store.getKey(KEY_ALIAS, null) as? SecretKey
+            ?: throw java.security.KeyStoreException("Existing storage key unavailable; original data retained")
+        val cipher = Cipher.getInstance(TRANSFORMATION).apply {
+            init(Cipher.DECRYPT_MODE, secret, GCMParameterSpec(TAG_LENGTH_BITS, Base64.decode(parts[1], Base64.NO_WRAP)))
+        }
+        return cipher.doFinal(Base64.decode(parts[2], Base64.NO_WRAP)).toString(Charsets.UTF_8)
+    }
+
+    /** Unlike normal credential replacement, a migration never resets the key or other values. */
+    @Synchronized
+    fun putStringStrict(key: String, value: String) {
+        // Refuse to replace even this one value when its original ciphertext
+        // cannot be decrypted. A migration cannot silently become credential reset.
+        if (preferences.contains(key)) getStringStrict(key)
+        val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val existing = store.getKey(KEY_ALIAS, null) as? SecretKey
+        if (existing == null && store.containsAlias(KEY_ALIAS)) {
+            throw java.security.KeyStoreException("Existing storage key has an unexpected type; original data retained")
+        }
+        val secret = resolveStrictStorageKey(existing, preferences.all.isNotEmpty()) { getOrCreateKey() }
+        val encoded = encrypt(value, secret)
+        check(preferences.edit().putString(key, encoded).commit()) { "Failed to persist encrypted migration value" }
     }
 
     @Synchronized

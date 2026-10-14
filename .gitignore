@@ -33,3 +33,5 @@ star.md
 
 # 插件打包产物（构建产物，分发走 Release/群文件）
 dist/ahup/
+dist/plugin-platform-test-*/
+artifacts/ci/

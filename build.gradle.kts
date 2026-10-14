@@ -21,3 +21,17 @@ allprojects {
         lockAllConfigurations()
     }
 }
+
+val officialPluginProjects = subprojects.filter { it.path.startsWith(":plugins:") }
+tasks.register("packageAllPlugins") {
+    group = "ahup"
+    description = "Build and sign every official AHUP using AHUP_SIGNING_CONFIG"
+    dependsOn(officialPluginProjects.map { "${it.path}:packageAhup" })
+}
+tasks.register("testPluginPlatform") {
+    group = "verification"
+    description = "Run host, shared contract and official plugin JVM regressions"
+    dependsOn(":host:testDebugUnitTest", ":core:auth:testDebugUnitTest",
+        ":core:designsystem:testDebugUnitTest", ":feature:circle:testDebugUnitTest")
+    dependsOn(officialPluginProjects.map { "${it.path}:testReleaseUnitTest" })
+}

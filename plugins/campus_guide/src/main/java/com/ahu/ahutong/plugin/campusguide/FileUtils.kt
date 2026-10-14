@@ -1,0 +1,142 @@
+package com.ahu.ahutong.plugin.campusguide
+
+import android.content.ContentValues
+import android.content.Context
+import android.graphics.BitmapFactory
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import okhttp3.ResponseBody
+
+object FileUtils {
+
+    fun getImagesDir(context: Context): File {
+        val dir = File(context.filesDir, "ahup_plugins/campus_guide/images")
+        if (!dir.exists()) dir.mkdirs()
+        return dir
+    }
+
+    fun getImageFile(context: Context, name: String): File {
+        val target = File(getImagesDir(context), name)
+        // One-way import retains the old user's calendar cache on first use.
+        if (!target.exists() && !name.endsWith(".part")) {
+            val legacy = File(File(context.filesDir, "images"), name)
+            if (isValidImage(legacy)) runCatching { legacy.copyTo(target) }
+        }
+        return target
+    }
+
+    suspend fun saveResponseBodyToFile(
+        context: Context,
+        body: ResponseBody,
+        fileName: String,
+        onProgress: (Float) -> Unit = {}
+    ): File? {
+        val outFile = getImageFile(context, fileName)
+        return try {
+            val total = body.contentLength()
+            var completed: Long = 0
+            body.byteStream().use { input: InputStream ->
+                FileOutputStream(outFile).use { output: OutputStream ->
+                    val buffer = ByteArray(8 * 1024)
+                    var read = input.read(buffer)
+                    while (read >= 0) {
+                        output.write(buffer, 0, read)
+                        completed += read
+                        if (total > 0) {
+                            onProgress(completed.toFloat() / total.toFloat())
+                        }
+                        read = input.read(buffer)
+                    }
+                    output.flush()
+                }
+            }
+            outFile
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun saveResponseBodyToFileAtomically(
+        context: Context,
+        body: ResponseBody,
+        fileName: String,
+        onProgress: (Float) -> Unit = {}
+    ): File? {
+        val outFile = getImageFile(context, fileName)
+        val partFile = saveResponseBodyToFile(context, body, "$fileName.part", onProgress)
+            ?: return null
+
+        return try {
+            require(isValidImage(partFile)) { "Downloaded calendar is not a valid image" }
+            try {
+                Files.move(
+                    partFile.toPath(),
+                    outFile.toPath(),
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+            } catch (_: Exception) {
+                Files.move(
+                    partFile.toPath(),
+                    outFile.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+            }
+            outFile
+        } catch (_: Exception) {
+            partFile.delete()
+            null
+        }
+    }
+
+    fun isValidImage(file: File): Boolean {
+        if (!file.isFile || file.length() <= 0L) return false
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, options)
+        return options.outWidth > 0 && options.outHeight > 0
+    }
+
+    fun saveImageToGallery(context: Context, imageFile: File) {
+        val values = ContentValues().apply {
+            put(
+                MediaStore.Images.Media.DISPLAY_NAME,
+                "AHU_Calendar_${System.currentTimeMillis()}.jpg"
+            )
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(
+                    MediaStore.Images.Media.RELATIVE_PATH,
+                    Environment.DIRECTORY_PICTURES + "/AHUTong"
+                )
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+        }
+
+        val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        } else {
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        }
+
+        val uri = checkNotNull(context.contentResolver.insert(collection, values)) { "无法创建相册图片" }
+        uri?.let {
+            context.contentResolver.openOutputStream(it).use { outputStream ->
+                java.io.FileInputStream(imageFile).use { inputStream ->
+                    inputStream.copyTo(outputStream!!)
+                }
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.clear()
+                values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                context.contentResolver.update(it, values, null, null)
+            }
+        }
+    }
+}

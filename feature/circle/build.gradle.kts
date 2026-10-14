@@ -45,39 +45,17 @@ dependencies {
     implementation(libs.coil.compose)
     implementation("androidx.compose.material3:material3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    testImplementation(kotlin("test-junit"))
 }
 
 
 /*
- * .ahup 打包：assembleRelease → AAR classes.jar → D8 → 签名 → zip。
+ * .ahup v3 打包交由独立 APK 链接模块，确保 R 类与资源表一致。
  * 运行：gradlew :feature:circle:packageAhup
- * 签名密钥在仓库外（Documents/ahutong-plugin-signing/），不存在时产未签名包。
+ * AHUP_SIGNING_CONFIG 指向本机签名配置；缺失时拒绝生成 release 包。
  */
-tasks.register("packageAhup", Exec::class) {
+tasks.register("packageAhup") {
     group = "ahup"
     description = "打包运行期插件（.ahup）"
-    dependsOn("assembleRelease")
-    val ks = File(System.getProperty("user.home") +
-        "/Documents/ahutong-plugin-signing/plugin-signing.jks")
-    commandLine(
-        "C:/Users/InChange_Jiang/AppData/Local/Programs/Python/Python313/python.exe",
-        rootProject.file("scripts/package_ahup.py"),
-        projectDir.absolutePath,
-        layout.buildDirectory.file("outputs/aar/circle-release.aar").get().asFile.absolutePath,
-        rootProject.file("dist/ahup/campus_circle.ahup").absolutePath,
-        "--id", "campus_circle",
-        "--title", "校园圈子",
-        "--summary", "安大 BBS 只读浏览",
-        "--tint", "0xFF5C6BC0",
-        "--version", "0.1.0",
-        "--author", "AHUTong",
-        "--entry", "com.ahu.ahutong.feature.circle.CirclePlugin",
-        "--capabilities", "NETWORK,PLUGIN_STORAGE",
-        *(if (ks.exists()) arrayOf(
-            "--keystore", ks.absolutePath,
-            "--storepass", "ahutong-plugin-2026",
-            "--alias", "ahup",
-            "--keypass", "ahutong-plugin-2026"
-        ) else arrayOf())
-    )
+    dependsOn(":plugins:campus_circle:packageAhup")
 }

@@ -242,7 +242,7 @@ val LocalComponentPack = staticCompositionLocalOf<AppComponentPack> { MaterialCo
 /** 主题 → 组件包注册表。新增主题在此注册一行即可。 */
 val AppUiTheme.componentPack: AppComponentPack
     get() = when (this) {
-        AppUiTheme.MIUIX -> MiuixComponentPack
-        AppUiTheme.LIQUID_GLASS, AppUiTheme.RADIANT -> RadiantComponentPack
+        AppUiTheme.MIUIX -> AppearanceRegistry.resolve(SlotSource.MIUIX)
+        AppUiTheme.LIQUID_GLASS, AppUiTheme.RADIANT -> AppearanceRegistry.resolve(SlotSource.RADIANT)
         AppUiTheme.MATERIAL -> MaterialComponentPack
     }

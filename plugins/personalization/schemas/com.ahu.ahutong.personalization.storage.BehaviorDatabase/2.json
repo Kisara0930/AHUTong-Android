@@ -1,0 +1,4181 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "a5dfce04885c816574f719fde096cd5b",
+    "entities": [
+      {
+        "tableName": "behavior_event",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`eventId` TEXT NOT NULL, `actionInstanceId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `processInstanceId` TEXT NOT NULL, `sequenceNo` INTEGER NOT NULL, `eventType` TEXT NOT NULL, `actionId` TEXT, `source` TEXT NOT NULL, `occurredAtEpochMs` INTEGER NOT NULL, `occurredAtElapsedMs` INTEGER NOT NULL, `sessionElapsedMs` INTEGER NOT NULL, `triggerDecisionId` TEXT, `resolvedDecisionId` TEXT, `timeBucket` INTEGER NOT NULL, `dayType` TEXT NOT NULL, `balanceBucket` TEXT NOT NULL, `daysToExamBucket` TEXT NOT NULL, `contextSchemaVersion` INTEGER NOT NULL, PRIMARY KEY(`eventId`))",
+        "fields": [
+          {
+            "fieldPath": "eventId",
+            "columnName": "eventId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionInstanceId",
+            "columnName": "actionInstanceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "processInstanceId",
+            "columnName": "processInstanceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sequenceNo",
+            "columnName": "sequenceNo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventType",
+            "columnName": "eventType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionId",
+            "columnName": "actionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredAtEpochMs",
+            "columnName": "occurredAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredAtElapsedMs",
+            "columnName": "occurredAtElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionElapsedMs",
+            "columnName": "sessionElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "triggerDecisionId",
+            "columnName": "triggerDecisionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "resolvedDecisionId",
+            "columnName": "resolvedDecisionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeBucket",
+            "columnName": "timeBucket",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dayType",
+            "columnName": "dayType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "balanceBucket",
+            "columnName": "balanceBucket",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "daysToExamBucket",
+            "columnName": "daysToExamBucket",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contextSchemaVersion",
+            "columnName": "contextSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "eventId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_behavior_event_profileKey_sequenceNo",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "sequenceNo"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_behavior_event_profileKey_sequenceNo` ON `${TABLE_NAME}` (`profileKey`, `sequenceNo`)"
+          },
+          {
+            "name": "index_behavior_event_profileKey_occurredAtEpochMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "occurredAtEpochMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_behavior_event_profileKey_occurredAtEpochMs` ON `${TABLE_NAME}` (`profileKey`, `occurredAtEpochMs`)"
+          },
+          {
+            "name": "index_behavior_event_resolvedDecisionId",
+            "unique": true,
+            "columnNames": [
+              "resolvedDecisionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_behavior_event_resolvedDecisionId` ON `${TABLE_NAME}` (`resolvedDecisionId`)"
+          },
+          {
+            "name": "index_behavior_event_profileKey_actionInstanceId_eventType",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "actionInstanceId",
+              "eventType"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_behavior_event_profileKey_actionInstanceId_eventType` ON `${TABLE_NAME}` (`profileKey`, `actionInstanceId`, `eventType`)"
+          }
+        ]
+      },
+      {
+        "tableName": "pending_prediction",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`decisionId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `processInstanceId` TEXT NOT NULL, `sequenceNo` INTEGER NOT NULL, `triggerEventId` TEXT NOT NULL, `previousAction` TEXT, `createdAtEpochMs` INTEGER NOT NULL, `createdAtElapsedMs` INTEGER NOT NULL, `labelDeadlineElapsedMs` INTEGER NOT NULL, `labelWindowPolicyVersion` INTEGER NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `outputSchemaVersion` INTEGER NOT NULL, `actionCatalogVersion` INTEGER NOT NULL, `features` BLOB NOT NULL, `availabilityMask` BLOB NOT NULL, `inputDigest` TEXT NOT NULL, `contextSnapshotJson` TEXT NOT NULL, `preparationState` TEXT NOT NULL, `preparationFailure` TEXT, `statProbabilities` BLOB, `tinyProbabilities` BLOB, `recentBaselineProbabilities` BLOB, `timeBaselineProbabilities` BLOB, `statModelVersion` INTEGER, `tinyModelVersion` INTEGER, `activeCheckpointId` TEXT, `activeCheckpointChecksum` TEXT, `candidateCheckpointId` TEXT, `candidateCheckpointChecksum` TEXT, `candidateProbabilities` BLOB, `candidateInferenceNanos` INTEGER, `statInferenceNanos` INTEGER, `tinyInferenceNanos` INTEGER, `promotionStageAtDecision` TEXT NOT NULL, `effectiveDecisionTierAtDecision` TEXT NOT NULL, `mixedLambda` REAL NOT NULL, `isPromotionHoldout` INTEGER NOT NULL, `interventionState` TEXT NOT NULL, `resolutionStatus` TEXT NOT NULL, `finalOrganicTarget` TEXT, `resolvedByEventId` TEXT, PRIMARY KEY(`decisionId`))",
+        "fields": [
+          {
+            "fieldPath": "decisionId",
+            "columnName": "decisionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "processInstanceId",
+            "columnName": "processInstanceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sequenceNo",
+            "columnName": "sequenceNo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "triggerEventId",
+            "columnName": "triggerEventId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previousAction",
+            "columnName": "previousAction",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtElapsedMs",
+            "columnName": "createdAtElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "labelDeadlineElapsedMs",
+            "columnName": "labelDeadlineElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "labelWindowPolicyVersion",
+            "columnName": "labelWindowPolicyVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outputSchemaVersion",
+            "columnName": "outputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionCatalogVersion",
+            "columnName": "actionCatalogVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "features",
+            "columnName": "features",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "availabilityMask",
+            "columnName": "availabilityMask",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inputDigest",
+            "columnName": "inputDigest",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contextSnapshotJson",
+            "columnName": "contextSnapshotJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preparationState",
+            "columnName": "preparationState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preparationFailure",
+            "columnName": "preparationFailure",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "statProbabilities",
+            "columnName": "statProbabilities",
+            "affinity": "BLOB"
+          },
+          {
+            "fieldPath": "tinyProbabilities",
+            "columnName": "tinyProbabilities",
+            "affinity": "BLOB"
+          },
+          {
+            "fieldPath": "recentBaselineProbabilities",
+            "columnName": "recentBaselineProbabilities",
+            "affinity": "BLOB"
+          },
+          {
+            "fieldPath": "timeBaselineProbabilities",
+            "columnName": "timeBaselineProbabilities",
+            "affinity": "BLOB"
+          },
+          {
+            "fieldPath": "statModelVersion",
+            "columnName": "statModelVersion",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "tinyModelVersion",
+            "columnName": "tinyModelVersion",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "activeCheckpointId",
+            "columnName": "activeCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "activeCheckpointChecksum",
+            "columnName": "activeCheckpointChecksum",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "candidateCheckpointId",
+            "columnName": "candidateCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "candidateCheckpointChecksum",
+            "columnName": "candidateCheckpointChecksum",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "candidateProbabilities",
+            "columnName": "candidateProbabilities",
+            "affinity": "BLOB"
+          },
+          {
+            "fieldPath": "candidateInferenceNanos",
+            "columnName": "candidateInferenceNanos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "statInferenceNanos",
+            "columnName": "statInferenceNanos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "tinyInferenceNanos",
+            "columnName": "tinyInferenceNanos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "promotionStageAtDecision",
+            "columnName": "promotionStageAtDecision",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveDecisionTierAtDecision",
+            "columnName": "effectiveDecisionTierAtDecision",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mixedLambda",
+            "columnName": "mixedLambda",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPromotionHoldout",
+            "columnName": "isPromotionHoldout",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interventionState",
+            "columnName": "interventionState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resolutionStatus",
+            "columnName": "resolutionStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "finalOrganicTarget",
+            "columnName": "finalOrganicTarget",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "resolvedByEventId",
+            "columnName": "resolvedByEventId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "decisionId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pending_prediction_profileKey_resolutionStatus_labelDeadlineElapsedMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "resolutionStatus",
+              "labelDeadlineElapsedMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_prediction_profileKey_resolutionStatus_labelDeadlineElapsedMs` ON `${TABLE_NAME}` (`profileKey`, `resolutionStatus`, `labelDeadlineElapsedMs`)"
+          },
+          {
+            "name": "index_pending_prediction_profileKey_sequenceNo",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "sequenceNo"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_prediction_profileKey_sequenceNo` ON `${TABLE_NAME}` (`profileKey`, `sequenceNo`)"
+          },
+          {
+            "name": "index_pending_prediction_profileKey_sessionId_triggerEventId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "sessionId",
+              "triggerEventId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_pending_prediction_profileKey_sessionId_triggerEventId` ON `${TABLE_NAME}` (`profileKey`, `sessionId`, `triggerEventId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "product_execution_lease",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`executionId` TEXT NOT NULL, `decisionId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `processInstanceId` TEXT NOT NULL, `actionId` TEXT NOT NULL, `interventionType` TEXT NOT NULL, `source` TEXT NOT NULL, `route` TEXT, `profileGeneration` INTEGER NOT NULL, `loginGeneration` INTEGER NOT NULL, `preparedAtSequenceNo` INTEGER NOT NULL, `executionEpoch` INTEGER NOT NULL, `createdAtElapsedMs` INTEGER NOT NULL, `expiresAtElapsedMs` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`executionId`))",
+        "fields": [
+          {
+            "fieldPath": "executionId",
+            "columnName": "executionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "decisionId",
+            "columnName": "decisionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "processInstanceId",
+            "columnName": "processInstanceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionId",
+            "columnName": "actionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interventionType",
+            "columnName": "interventionType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "route",
+            "columnName": "route",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "profileGeneration",
+            "columnName": "profileGeneration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "loginGeneration",
+            "columnName": "loginGeneration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preparedAtSequenceNo",
+            "columnName": "preparedAtSequenceNo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "executionEpoch",
+            "columnName": "executionEpoch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtElapsedMs",
+            "columnName": "createdAtElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAtElapsedMs",
+            "columnName": "expiresAtElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "executionId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_product_execution_lease_profileKey_decisionId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "decisionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_product_execution_lease_profileKey_decisionId` ON `${TABLE_NAME}` (`profileKey`, `decisionId`)"
+          },
+          {
+            "name": "index_product_execution_lease_profileKey_executionId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "executionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_product_execution_lease_profileKey_executionId` ON `${TABLE_NAME}` (`profileKey`, `executionId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "action_stat",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `contextKey` TEXT NOT NULL, `actionId` TEXT NOT NULL, `positiveMass` REAL NOT NULL, `exposureMass` REAL NOT NULL, `updatedAtEpochDay` INTEGER NOT NULL, PRIMARY KEY(`profileKey`, `contextKey`, `actionId`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contextKey",
+            "columnName": "contextKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionId",
+            "columnName": "actionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positiveMass",
+            "columnName": "positiveMass",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exposureMass",
+            "columnName": "exposureMass",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochDay",
+            "columnName": "updatedAtEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey",
+            "contextKey",
+            "actionId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_action_stat_profileKey_actionId",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "actionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_action_stat_profileKey_actionId` ON `${TABLE_NAME}` (`profileKey`, `actionId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "training_sample",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sampleId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `decisionId` TEXT NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `outputSchemaVersion` INTEGER NOT NULL, `actionCatalogVersion` INTEGER NOT NULL, `features` BLOB NOT NULL, `targetIndex` INTEGER NOT NULL, `targetActionId` TEXT NOT NULL, `actionFamily` TEXT NOT NULL, `occurredEpochDay` INTEGER NOT NULL, `replayPriority` REAL NOT NULL, `trainingCount` INTEGER NOT NULL, `labelSource` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sampleId",
+            "columnName": "sampleId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "decisionId",
+            "columnName": "decisionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outputSchemaVersion",
+            "columnName": "outputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionCatalogVersion",
+            "columnName": "actionCatalogVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "features",
+            "columnName": "features",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetIndex",
+            "columnName": "targetIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetActionId",
+            "columnName": "targetActionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionFamily",
+            "columnName": "actionFamily",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredEpochDay",
+            "columnName": "occurredEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replayPriority",
+            "columnName": "replayPriority",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingCount",
+            "columnName": "trainingCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "labelSource",
+            "columnName": "labelSource",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_training_sample_profileKey_sampleId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "sampleId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_training_sample_profileKey_sampleId` ON `${TABLE_NAME}` (`profileKey`, `sampleId`)"
+          },
+          {
+            "name": "index_training_sample_profileKey_decisionId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "decisionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_training_sample_profileKey_decisionId` ON `${TABLE_NAME}` (`profileKey`, `decisionId`)"
+          },
+          {
+            "name": "index_training_sample_profileKey_targetIndex",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "targetIndex"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_training_sample_profileKey_targetIndex` ON `${TABLE_NAME}` (`profileKey`, `targetIndex`)"
+          },
+          {
+            "name": "index_training_sample_profileKey_occurredEpochDay",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "occurredEpochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_training_sample_profileKey_occurredEpochDay` ON `${TABLE_NAME}` (`profileKey`, `occurredEpochDay`)"
+          }
+        ]
+      },
+      {
+        "tableName": "training_batch_journal",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`batchId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `expectedTrainingRevision` INTEGER NOT NULL, `selectedRowIds` TEXT NOT NULL, `state` TEXT NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `committedAtEpochMs` INTEGER, PRIMARY KEY(`batchId`))",
+        "fields": [
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedTrainingRevision",
+            "columnName": "expectedTrainingRevision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selectedRowIds",
+            "columnName": "selectedRowIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "committedAtEpochMs",
+            "columnName": "committedAtEpochMs",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "batchId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_training_batch_journal_profileKey_state_createdAtEpochMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "state",
+              "createdAtEpochMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_training_batch_journal_profileKey_state_createdAtEpochMs` ON `${TABLE_NAME}` (`profileKey`, `state`, `createdAtEpochMs`)"
+          }
+        ]
+      },
+      {
+        "tableName": "shadow_evaluation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileKey` TEXT NOT NULL, `evaluationSeq` INTEGER NOT NULL, `decisionId` TEXT NOT NULL, `occurredEpochDay` INTEGER NOT NULL, `trueLabel` TEXT NOT NULL, `isOrganicNonNone` INTEGER NOT NULL, `statTop1` INTEGER NOT NULL, `statTop3` INTEGER NOT NULL, `statReciprocalRank` REAL NOT NULL, `statBrier` REAL NOT NULL, `statLogLoss` REAL NOT NULL, `statTop1Confidence` REAL NOT NULL, `tinyTop1` INTEGER NOT NULL, `tinyTop3` INTEGER NOT NULL, `tinyReciprocalRank` REAL NOT NULL, `tinyBrier` REAL NOT NULL, `tinyLogLoss` REAL NOT NULL, `tinyTop1Confidence` REAL NOT NULL, `recentReciprocalRank` REAL NOT NULL, `recentTop3` INTEGER NOT NULL, `timeReciprocalRank` REAL NOT NULL, `timeTop3` INTEGER NOT NULL, `winner` TEXT NOT NULL, `paired` INTEGER NOT NULL, `tinyPredictionStatus` TEXT NOT NULL, `statInferenceNanos` INTEGER NOT NULL, `tinyInferenceNanos` INTEGER NOT NULL, `trainingNanos` INTEGER NOT NULL, `modelSizeBytes` INTEGER NOT NULL, `promotionEligible` INTEGER NOT NULL, `telemetryEligible` INTEGER NOT NULL, `rejectionReason` TEXT, `stage` TEXT NOT NULL, `tier` TEXT NOT NULL, `activeCheckpointId` TEXT, `isHoldout` INTEGER NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `outputSchemaVersion` INTEGER NOT NULL, `actionCatalogVersion` INTEGER NOT NULL, `appVersionCode` INTEGER NOT NULL, `statModelVersion` INTEGER NOT NULL, `tinyModelVersion` INTEGER NOT NULL, `trainingConfigVersion` INTEGER NOT NULL, `metricSchemaVersion` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evaluationSeq",
+            "columnName": "evaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "decisionId",
+            "columnName": "decisionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredEpochDay",
+            "columnName": "occurredEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trueLabel",
+            "columnName": "trueLabel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isOrganicNonNone",
+            "columnName": "isOrganicNonNone",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statTop1",
+            "columnName": "statTop1",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statTop3",
+            "columnName": "statTop3",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statReciprocalRank",
+            "columnName": "statReciprocalRank",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statBrier",
+            "columnName": "statBrier",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statLogLoss",
+            "columnName": "statLogLoss",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statTop1Confidence",
+            "columnName": "statTop1Confidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyTop1",
+            "columnName": "tinyTop1",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyTop3",
+            "columnName": "tinyTop3",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyReciprocalRank",
+            "columnName": "tinyReciprocalRank",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyBrier",
+            "columnName": "tinyBrier",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyLogLoss",
+            "columnName": "tinyLogLoss",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyTop1Confidence",
+            "columnName": "tinyTop1Confidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recentReciprocalRank",
+            "columnName": "recentReciprocalRank",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recentTop3",
+            "columnName": "recentTop3",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeReciprocalRank",
+            "columnName": "timeReciprocalRank",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeTop3",
+            "columnName": "timeTop3",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "winner",
+            "columnName": "winner",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "paired",
+            "columnName": "paired",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyPredictionStatus",
+            "columnName": "tinyPredictionStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statInferenceNanos",
+            "columnName": "statInferenceNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyInferenceNanos",
+            "columnName": "tinyInferenceNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingNanos",
+            "columnName": "trainingNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelSizeBytes",
+            "columnName": "modelSizeBytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "promotionEligible",
+            "columnName": "promotionEligible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "telemetryEligible",
+            "columnName": "telemetryEligible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rejectionReason",
+            "columnName": "rejectionReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "stage",
+            "columnName": "stage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tier",
+            "columnName": "tier",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeCheckpointId",
+            "columnName": "activeCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isHoldout",
+            "columnName": "isHoldout",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outputSchemaVersion",
+            "columnName": "outputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionCatalogVersion",
+            "columnName": "actionCatalogVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appVersionCode",
+            "columnName": "appVersionCode",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statModelVersion",
+            "columnName": "statModelVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyModelVersion",
+            "columnName": "tinyModelVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingConfigVersion",
+            "columnName": "trainingConfigVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "metricSchemaVersion",
+            "columnName": "metricSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_shadow_evaluation_profileKey_evaluationSeq",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "evaluationSeq"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_shadow_evaluation_profileKey_evaluationSeq` ON `${TABLE_NAME}` (`profileKey`, `evaluationSeq`)"
+          },
+          {
+            "name": "index_shadow_evaluation_profileKey_decisionId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "decisionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_shadow_evaluation_profileKey_decisionId` ON `${TABLE_NAME}` (`profileKey`, `decisionId`)"
+          },
+          {
+            "name": "index_shadow_evaluation_profileKey_occurredEpochDay",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "occurredEpochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_shadow_evaluation_profileKey_occurredEpochDay` ON `${TABLE_NAME}` (`profileKey`, `occurredEpochDay`)"
+          }
+        ]
+      },
+      {
+        "tableName": "candidate_shadow_evaluation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileKey` TEXT NOT NULL, `evaluationSeq` INTEGER NOT NULL, `decisionId` TEXT NOT NULL, `activeCheckpointId` TEXT NOT NULL, `candidateCheckpointId` TEXT NOT NULL, `activeChecksum` TEXT NOT NULL, `candidateChecksum` TEXT NOT NULL, `trueLabel` TEXT NOT NULL, `activeTop3` INTEGER NOT NULL, `candidateTop3` INTEGER NOT NULL, `activeMrr` REAL NOT NULL, `candidateMrr` REAL NOT NULL, `activeBrier` REAL NOT NULL, `candidateBrier` REAL NOT NULL, `activeLogLoss` REAL NOT NULL, `candidateLogLoss` REAL NOT NULL, `activeConfidence` REAL NOT NULL, `candidateConfidence` REAL NOT NULL, `activeInferenceNanos` INTEGER NOT NULL, `candidateInferenceNanos` INTEGER NOT NULL, `candidateStatus` TEXT NOT NULL, `consumed` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evaluationSeq",
+            "columnName": "evaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "decisionId",
+            "columnName": "decisionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeCheckpointId",
+            "columnName": "activeCheckpointId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateCheckpointId",
+            "columnName": "candidateCheckpointId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeChecksum",
+            "columnName": "activeChecksum",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateChecksum",
+            "columnName": "candidateChecksum",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trueLabel",
+            "columnName": "trueLabel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeTop3",
+            "columnName": "activeTop3",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateTop3",
+            "columnName": "candidateTop3",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeMrr",
+            "columnName": "activeMrr",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateMrr",
+            "columnName": "candidateMrr",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeBrier",
+            "columnName": "activeBrier",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateBrier",
+            "columnName": "candidateBrier",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeLogLoss",
+            "columnName": "activeLogLoss",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateLogLoss",
+            "columnName": "candidateLogLoss",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeConfidence",
+            "columnName": "activeConfidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateConfidence",
+            "columnName": "candidateConfidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeInferenceNanos",
+            "columnName": "activeInferenceNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateInferenceNanos",
+            "columnName": "candidateInferenceNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateStatus",
+            "columnName": "candidateStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consumed",
+            "columnName": "consumed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_candidate_shadow_evaluation_profileKey_evaluationSeq",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "evaluationSeq"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_candidate_shadow_evaluation_profileKey_evaluationSeq` ON `${TABLE_NAME}` (`profileKey`, `evaluationSeq`)"
+          }
+        ]
+      },
+      {
+        "tableName": "tiny_promotion_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `holdoutSeed` TEXT NOT NULL, `stage` TEXT NOT NULL, `mixedLambda` REAL NOT NULL, `modelGenerationVersion` INTEGER NOT NULL, `stageGeneration` INTEGER NOT NULL, `transitionSequence` INTEGER NOT NULL, `enteredEpochDay` INTEGER NOT NULL, `evidenceHighWatermark` INTEGER NOT NULL, `activeCheckpointId` TEXT, `activeChecksum` TEXT, `candidateCheckpointId` TEXT, `trainingRevision` INTEGER NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `outputSchemaVersion` INTEGER NOT NULL, `actionCatalogVersion` INTEGER NOT NULL, `promotionConfigVersion` INTEGER NOT NULL, `consecutivePassingWindows` INTEGER NOT NULL, `consecutiveFailingWindows` INTEGER NOT NULL, `cooldownUntilEpochDay` INTEGER NOT NULL, `minimumNewEvidenceSeq` INTEGER NOT NULL, `healthState` TEXT NOT NULL, `lastTransitionReason` TEXT NOT NULL, `updatedAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`profileKey`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "holdoutSeed",
+            "columnName": "holdoutSeed",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stage",
+            "columnName": "stage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mixedLambda",
+            "columnName": "mixedLambda",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelGenerationVersion",
+            "columnName": "modelGenerationVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stageGeneration",
+            "columnName": "stageGeneration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transitionSequence",
+            "columnName": "transitionSequence",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enteredEpochDay",
+            "columnName": "enteredEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evidenceHighWatermark",
+            "columnName": "evidenceHighWatermark",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeCheckpointId",
+            "columnName": "activeCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "activeChecksum",
+            "columnName": "activeChecksum",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "candidateCheckpointId",
+            "columnName": "candidateCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "trainingRevision",
+            "columnName": "trainingRevision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outputSchemaVersion",
+            "columnName": "outputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionCatalogVersion",
+            "columnName": "actionCatalogVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "promotionConfigVersion",
+            "columnName": "promotionConfigVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consecutivePassingWindows",
+            "columnName": "consecutivePassingWindows",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consecutiveFailingWindows",
+            "columnName": "consecutiveFailingWindows",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cooldownUntilEpochDay",
+            "columnName": "cooldownUntilEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minimumNewEvidenceSeq",
+            "columnName": "minimumNewEvidenceSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "healthState",
+            "columnName": "healthState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastTransitionReason",
+            "columnName": "lastTransitionReason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updatedAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey"
+          ]
+        }
+      },
+      {
+        "tableName": "tiny_runtime_health_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `recentAttemptBits` INTEGER NOT NULL, `recentAttemptCount` INTEGER NOT NULL, `failureEpochDay` INTEGER NOT NULL, `failuresToday` INTEGER NOT NULL, `totalFailures` INTEGER NOT NULL, `lastCheckpointId` TEXT, `lastFailureCode` TEXT, `lastFailureEpochMs` INTEGER, `lastSuccessEpochMs` INTEGER, PRIMARY KEY(`profileKey`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recentAttemptBits",
+            "columnName": "recentAttemptBits",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recentAttemptCount",
+            "columnName": "recentAttemptCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "failureEpochDay",
+            "columnName": "failureEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "failuresToday",
+            "columnName": "failuresToday",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalFailures",
+            "columnName": "totalFailures",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastCheckpointId",
+            "columnName": "lastCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastFailureCode",
+            "columnName": "lastFailureCode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastFailureEpochMs",
+            "columnName": "lastFailureEpochMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastSuccessEpochMs",
+            "columnName": "lastSuccessEpochMs",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey"
+          ]
+        }
+      },
+      {
+        "tableName": "promotion_evaluation_window",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileKey` TEXT NOT NULL, `windowId` TEXT NOT NULL, `purpose` TEXT NOT NULL, `stage` TEXT NOT NULL, `checkpointId` TEXT, `startEvaluationSeq` INTEGER NOT NULL, `endEvaluationSeq` INTEGER NOT NULL, `startEpochDay` INTEGER NOT NULL, `endEpochDay` INTEGER NOT NULL, `eligibleSampleCount` INTEGER NOT NULL, `organicNonNoneSampleCount` INTEGER NOT NULL, `pairedSampleCount` INTEGER NOT NULL, `metricsJson` TEXT NOT NULL, `ece` REAL NOT NULL, `perActionDigest` TEXT NOT NULL, `inferenceP95Nanos` INTEGER NOT NULL, `trainingP95Nanos` INTEGER NOT NULL, `status` TEXT NOT NULL, `qualified` INTEGER NOT NULL, `consumedTransitionSequence` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "windowId",
+            "columnName": "windowId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "purpose",
+            "columnName": "purpose",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stage",
+            "columnName": "stage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checkpointId",
+            "columnName": "checkpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "startEvaluationSeq",
+            "columnName": "startEvaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endEvaluationSeq",
+            "columnName": "endEvaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startEpochDay",
+            "columnName": "startEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endEpochDay",
+            "columnName": "endEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eligibleSampleCount",
+            "columnName": "eligibleSampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "organicNonNoneSampleCount",
+            "columnName": "organicNonNoneSampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pairedSampleCount",
+            "columnName": "pairedSampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "metricsJson",
+            "columnName": "metricsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ece",
+            "columnName": "ece",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "perActionDigest",
+            "columnName": "perActionDigest",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inferenceP95Nanos",
+            "columnName": "inferenceP95Nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingP95Nanos",
+            "columnName": "trainingP95Nanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "qualified",
+            "columnName": "qualified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consumedTransitionSequence",
+            "columnName": "consumedTransitionSequence",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_promotion_evaluation_window_profileKey_windowId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "windowId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_promotion_evaluation_window_profileKey_windowId` ON `${TABLE_NAME}` (`profileKey`, `windowId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "promotion_action_qualification",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `actionId` TEXT NOT NULL, `highestQualifiedTier` TEXT NOT NULL, `checkpointId` TEXT, `sampleCount` INTEGER NOT NULL, `evidenceWindowId` TEXT, `lastRegressionReason` TEXT, PRIMARY KEY(`profileKey`, `actionId`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionId",
+            "columnName": "actionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "highestQualifiedTier",
+            "columnName": "highestQualifiedTier",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checkpointId",
+            "columnName": "checkpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sampleCount",
+            "columnName": "sampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evidenceWindowId",
+            "columnName": "evidenceWindowId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastRegressionReason",
+            "columnName": "lastRegressionReason",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey",
+            "actionId"
+          ]
+        }
+      },
+      {
+        "tableName": "promotion_transition_journal",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`journalId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `expectedGeneration` INTEGER NOT NULL, `fromStage` TEXT NOT NULL, `toStage` TEXT NOT NULL, `checkpointId` TEXT, `checksum` TEXT, `state` TEXT NOT NULL, `preparedAtEpochMs` INTEGER NOT NULL, `committedAtEpochMs` INTEGER, PRIMARY KEY(`journalId`))",
+        "fields": [
+          {
+            "fieldPath": "journalId",
+            "columnName": "journalId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedGeneration",
+            "columnName": "expectedGeneration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fromStage",
+            "columnName": "fromStage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "toStage",
+            "columnName": "toStage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "checkpointId",
+            "columnName": "checkpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "checksum",
+            "columnName": "checksum",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preparedAtEpochMs",
+            "columnName": "preparedAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "committedAtEpochMs",
+            "columnName": "committedAtEpochMs",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "journalId"
+          ]
+        }
+      },
+      {
+        "tableName": "learning_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `statLearningStartedEpochDay` INTEGER, `tinyTrainingStartedEpochDay` INTEGER, `lastCommittedBatchId` TEXT, `lastTrainingNanos` INTEGER NOT NULL, `lastTrainingLoss` REAL, `lastGradientNorm` REAL, PRIMARY KEY(`profileKey`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statLearningStartedEpochDay",
+            "columnName": "statLearningStartedEpochDay",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "tinyTrainingStartedEpochDay",
+            "columnName": "tinyTrainingStartedEpochDay",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastCommittedBatchId",
+            "columnName": "lastCommittedBatchId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastTrainingNanos",
+            "columnName": "lastTrainingNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastTrainingLoss",
+            "columnName": "lastTrainingLoss",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "lastGradientNorm",
+            "columnName": "lastGradientNorm",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey"
+          ]
+        }
+      },
+      {
+        "tableName": "telemetry_report",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `reportId` TEXT NOT NULL, `batchId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `consentLifecycleId` TEXT NOT NULL, `telemetryId` TEXT NOT NULL, `modelGenerationId` TEXT NOT NULL, `windowId` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `payloadSha256Hex` TEXT NOT NULL, `exactRequestBodyJson` TEXT NOT NULL, `bodySha256Hex` TEXT NOT NULL, `state` TEXT NOT NULL, `attemptCount` INTEGER NOT NULL, `nextAttemptEpochMs` INTEGER NOT NULL, `lastAttemptEpochDay` INTEGER, `createdAtEpochMs` INTEGER NOT NULL, `expiresAtEpochMs` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reportId",
+            "columnName": "reportId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consentLifecycleId",
+            "columnName": "consentLifecycleId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "telemetryId",
+            "columnName": "telemetryId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelGenerationId",
+            "columnName": "modelGenerationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "windowId",
+            "columnName": "windowId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadSha256Hex",
+            "columnName": "payloadSha256Hex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exactRequestBodyJson",
+            "columnName": "exactRequestBodyJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bodySha256Hex",
+            "columnName": "bodySha256Hex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptCount",
+            "columnName": "attemptCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextAttemptEpochMs",
+            "columnName": "nextAttemptEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastAttemptEpochDay",
+            "columnName": "lastAttemptEpochDay",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAtEpochMs",
+            "columnName": "expiresAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_telemetry_report_reportId",
+            "unique": true,
+            "columnNames": [
+              "reportId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_telemetry_report_reportId` ON `${TABLE_NAME}` (`reportId`)"
+          },
+          {
+            "name": "index_telemetry_report_batchId",
+            "unique": true,
+            "columnNames": [
+              "batchId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_telemetry_report_batchId` ON `${TABLE_NAME}` (`batchId`)"
+          },
+          {
+            "name": "index_telemetry_report_profileKey_windowId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "windowId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_telemetry_report_profileKey_windowId` ON `${TABLE_NAME}` (`profileKey`, `windowId`)"
+          },
+          {
+            "name": "index_telemetry_report_consentLifecycleId_state",
+            "unique": false,
+            "columnNames": [
+              "consentLifecycleId",
+              "state"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_telemetry_report_consentLifecycleId_state` ON `${TABLE_NAME}` (`consentLifecycleId`, `state`)"
+          }
+        ]
+      },
+      {
+        "tableName": "telemetry_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `consentLifecycleId` TEXT NOT NULL, `telemetryId` TEXT NOT NULL, `modelGenerationId` TEXT NOT NULL, `localModelGenerationVersion` INTEGER NOT NULL, `encryptedRevocationCapability` TEXT NOT NULL, `revocationKeyAlias` TEXT NOT NULL, `consentGeneration` INTEGER NOT NULL, `aggregationStartEvaluationSeq` INTEGER NOT NULL, `lastReportedEvaluationSeq` INTEGER NOT NULL, `lastReportCreatedEpochDay` INTEGER, `lifecycleState` TEXT NOT NULL, `updatedAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`profileKey`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consentLifecycleId",
+            "columnName": "consentLifecycleId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "telemetryId",
+            "columnName": "telemetryId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelGenerationId",
+            "columnName": "modelGenerationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localModelGenerationVersion",
+            "columnName": "localModelGenerationVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "encryptedRevocationCapability",
+            "columnName": "encryptedRevocationCapability",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revocationKeyAlias",
+            "columnName": "revocationKeyAlias",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consentGeneration",
+            "columnName": "consentGeneration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "aggregationStartEvaluationSeq",
+            "columnName": "aggregationStartEvaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastReportedEvaluationSeq",
+            "columnName": "lastReportedEvaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastReportCreatedEpochDay",
+            "columnName": "lastReportCreatedEpochDay",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lifecycleState",
+            "columnName": "lifecycleState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updatedAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_telemetry_state_consentLifecycleId",
+            "unique": true,
+            "columnNames": [
+              "consentLifecycleId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_telemetry_state_consentLifecycleId` ON `${TABLE_NAME}` (`consentLifecycleId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "telemetry_aggregate_window",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`windowId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `consentLifecycleId` TEXT NOT NULL, `telemetryId` TEXT NOT NULL, `modelGenerationId` TEXT NOT NULL, `activeCheckpointId` TEXT, `startEvaluationSeq` INTEGER NOT NULL, `endEvaluationSeq` INTEGER NOT NULL, `windowStartEpochDay` INTEGER NOT NULL, `windowEndEpochDay` INTEGER NOT NULL, `eligibleSampleCount` INTEGER NOT NULL, `organicNonNoneSampleCount` INTEGER NOT NULL, `pairedSampleCount` INTEGER NOT NULL, `statTop1Correct` INTEGER NOT NULL, `statTop3Hit` INTEGER NOT NULL, `statReciprocalRankSum` REAL NOT NULL, `statBrierSum` REAL NOT NULL, `statLogLossSum` REAL NOT NULL, `tinyTop1Correct` INTEGER NOT NULL, `tinyTop3Hit` INTEGER NOT NULL, `tinyReciprocalRankSum` REAL NOT NULL, `tinyBrierSum` REAL NOT NULL, `tinyLogLossSum` REAL NOT NULL, `tinyWins` INTEGER NOT NULL, `statWins` INTEGER NOT NULL, `ties` INTEGER NOT NULL, `statInferenceNanosSum` INTEGER NOT NULL, `tinyInferenceNanosSum` INTEGER NOT NULL, `trainingNanosSum` INTEGER NOT NULL, `modelSizeBytesMax` INTEGER NOT NULL, `perActionJson` TEXT NOT NULL, `appVersionCode` INTEGER NOT NULL, `statModelVersion` INTEGER NOT NULL, `tinyModelVersion` INTEGER NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `outputSchemaVersion` INTEGER NOT NULL, `actionCatalogVersion` INTEGER NOT NULL, `trainingConfigVersion` INTEGER NOT NULL, `metricSchemaVersion` INTEGER NOT NULL, `state` TEXT NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `updatedAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`windowId`))",
+        "fields": [
+          {
+            "fieldPath": "windowId",
+            "columnName": "windowId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consentLifecycleId",
+            "columnName": "consentLifecycleId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "telemetryId",
+            "columnName": "telemetryId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelGenerationId",
+            "columnName": "modelGenerationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeCheckpointId",
+            "columnName": "activeCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "startEvaluationSeq",
+            "columnName": "startEvaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endEvaluationSeq",
+            "columnName": "endEvaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "windowStartEpochDay",
+            "columnName": "windowStartEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "windowEndEpochDay",
+            "columnName": "windowEndEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eligibleSampleCount",
+            "columnName": "eligibleSampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "organicNonNoneSampleCount",
+            "columnName": "organicNonNoneSampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pairedSampleCount",
+            "columnName": "pairedSampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statTop1Correct",
+            "columnName": "statTop1Correct",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statTop3Hit",
+            "columnName": "statTop3Hit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statReciprocalRankSum",
+            "columnName": "statReciprocalRankSum",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statBrierSum",
+            "columnName": "statBrierSum",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statLogLossSum",
+            "columnName": "statLogLossSum",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyTop1Correct",
+            "columnName": "tinyTop1Correct",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyTop3Hit",
+            "columnName": "tinyTop3Hit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyReciprocalRankSum",
+            "columnName": "tinyReciprocalRankSum",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyBrierSum",
+            "columnName": "tinyBrierSum",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyLogLossSum",
+            "columnName": "tinyLogLossSum",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyWins",
+            "columnName": "tinyWins",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statWins",
+            "columnName": "statWins",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ties",
+            "columnName": "ties",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statInferenceNanosSum",
+            "columnName": "statInferenceNanosSum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyInferenceNanosSum",
+            "columnName": "tinyInferenceNanosSum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingNanosSum",
+            "columnName": "trainingNanosSum",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelSizeBytesMax",
+            "columnName": "modelSizeBytesMax",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "perActionJson",
+            "columnName": "perActionJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appVersionCode",
+            "columnName": "appVersionCode",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statModelVersion",
+            "columnName": "statModelVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyModelVersion",
+            "columnName": "tinyModelVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outputSchemaVersion",
+            "columnName": "outputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionCatalogVersion",
+            "columnName": "actionCatalogVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingConfigVersion",
+            "columnName": "trainingConfigVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "metricSchemaVersion",
+            "columnName": "metricSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updatedAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "windowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_telemetry_aggregate_window_profileKey_consentLifecycleId_state_startEvaluationSeq",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "consentLifecycleId",
+              "state",
+              "startEvaluationSeq"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_telemetry_aggregate_window_profileKey_consentLifecycleId_state_startEvaluationSeq` ON `${TABLE_NAME}` (`profileKey`, `consentLifecycleId`, `state`, `startEvaluationSeq`)"
+          },
+          {
+            "name": "index_telemetry_aggregate_window_profileKey_consentLifecycleId_startEvaluationSeq",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "consentLifecycleId",
+              "startEvaluationSeq"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_telemetry_aggregate_window_profileKey_consentLifecycleId_startEvaluationSeq` ON `${TABLE_NAME}` (`profileKey`, `consentLifecycleId`, `startEvaluationSeq`)"
+          }
+        ]
+      },
+      {
+        "tableName": "telemetry_deletion_tombstone",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`deletionId` TEXT NOT NULL, `consentLifecycleId` TEXT NOT NULL, `telemetryId` TEXT NOT NULL, `modelGenerationId` TEXT NOT NULL, `encryptedRevocationCapability` TEXT NOT NULL, `revocationKeyAlias` TEXT NOT NULL, `attemptCount` INTEGER NOT NULL, `nextAttemptEpochMs` INTEGER NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `expiresAtEpochMs` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`deletionId`))",
+        "fields": [
+          {
+            "fieldPath": "deletionId",
+            "columnName": "deletionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consentLifecycleId",
+            "columnName": "consentLifecycleId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "telemetryId",
+            "columnName": "telemetryId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelGenerationId",
+            "columnName": "modelGenerationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "encryptedRevocationCapability",
+            "columnName": "encryptedRevocationCapability",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revocationKeyAlias",
+            "columnName": "revocationKeyAlias",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptCount",
+            "columnName": "attemptCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextAttemptEpochMs",
+            "columnName": "nextAttemptEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAtEpochMs",
+            "columnName": "expiresAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "deletionId"
+          ]
+        }
+      },
+      {
+        "tableName": "semantic_event",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`eventId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `sequenceNo` INTEGER NOT NULL, `eventFamily` TEXT NOT NULL, `domainId` TEXT NOT NULL, `semanticId` TEXT NOT NULL, `changeKind` TEXT NOT NULL, `coarseValueBucket` TEXT NOT NULL, `route` TEXT, `affectedCandidateSetVersion` INTEGER NOT NULL, `source` TEXT NOT NULL, `committedAtEpochDay` INTEGER NOT NULL, `occurredAtElapsedMs` INTEGER NOT NULL, `semanticSchemaVersion` INTEGER NOT NULL, `tainted` INTEGER NOT NULL, `mutationBatchId` TEXT NOT NULL, `changeSetId` TEXT NOT NULL, PRIMARY KEY(`eventId`))",
+        "fields": [
+          {
+            "fieldPath": "eventId",
+            "columnName": "eventId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sequenceNo",
+            "columnName": "sequenceNo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventFamily",
+            "columnName": "eventFamily",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "domainId",
+            "columnName": "domainId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "semanticId",
+            "columnName": "semanticId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "changeKind",
+            "columnName": "changeKind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coarseValueBucket",
+            "columnName": "coarseValueBucket",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "route",
+            "columnName": "route",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "affectedCandidateSetVersion",
+            "columnName": "affectedCandidateSetVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "committedAtEpochDay",
+            "columnName": "committedAtEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredAtElapsedMs",
+            "columnName": "occurredAtElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "semanticSchemaVersion",
+            "columnName": "semanticSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tainted",
+            "columnName": "tainted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mutationBatchId",
+            "columnName": "mutationBatchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "changeSetId",
+            "columnName": "changeSetId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "eventId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_semantic_event_profileKey_sequenceNo",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "sequenceNo"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_semantic_event_profileKey_sequenceNo` ON `${TABLE_NAME}` (`profileKey`, `sequenceNo`)"
+          },
+          {
+            "name": "index_semantic_event_profileKey_semanticId_committedAtEpochDay",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "semanticId",
+              "committedAtEpochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_semantic_event_profileKey_semanticId_committedAtEpochDay` ON `${TABLE_NAME}` (`profileKey`, `semanticId`, `committedAtEpochDay`)"
+          },
+          {
+            "name": "index_semantic_event_profileKey_mutationBatchId",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "mutationBatchId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_semantic_event_profileKey_mutationBatchId` ON `${TABLE_NAME}` (`profileKey`, `mutationBatchId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "semantic_change_set",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`changeSetId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `route` TEXT, `mutationBatchId` TEXT NOT NULL, `firstOccurredAtElapsedMs` INTEGER NOT NULL, `lastOccurredAtElapsedMs` INTEGER NOT NULL, `mutationCount` INTEGER NOT NULL, `semanticIdsCsv` TEXT NOT NULL, `affectedActionIdsCsv` TEXT NOT NULL, `affectedCandidateSetVersion` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`changeSetId`))",
+        "fields": [
+          {
+            "fieldPath": "changeSetId",
+            "columnName": "changeSetId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "route",
+            "columnName": "route",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mutationBatchId",
+            "columnName": "mutationBatchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstOccurredAtElapsedMs",
+            "columnName": "firstOccurredAtElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastOccurredAtElapsedMs",
+            "columnName": "lastOccurredAtElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mutationCount",
+            "columnName": "mutationCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "semanticIdsCsv",
+            "columnName": "semanticIdsCsv",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "affectedActionIdsCsv",
+            "columnName": "affectedActionIdsCsv",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "affectedCandidateSetVersion",
+            "columnName": "affectedCandidateSetVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "changeSetId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_semantic_change_set_profileKey_sessionId_state_lastOccurredAtElapsedMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "sessionId",
+              "state",
+              "lastOccurredAtElapsedMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_semantic_change_set_profileKey_sessionId_state_lastOccurredAtElapsedMs` ON `${TABLE_NAME}` (`profileKey`, `sessionId`, `state`, `lastOccurredAtElapsedMs`)"
+          }
+        ]
+      },
+      {
+        "tableName": "pending_journey",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`journeyId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `processInstanceId` TEXT NOT NULL, `triggerEventId` TEXT NOT NULL, `sequenceNo` INTEGER NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `createdAtElapsedMs` INTEGER NOT NULL, `deadlineElapsedMs` INTEGER NOT NULL, `maximumActions` INTEGER NOT NULL, `observedActionCount` INTEGER NOT NULL, `observedActionIdsCsv` TEXT NOT NULL, `lastLeafEnteredAtElapsedMs` INTEGER, `lastLeafActionId` TEXT, `lastLeafEventId` TEXT, `featureSchemaVersion` INTEGER NOT NULL, `journeyOutputSchemaVersion` INTEGER NOT NULL, `features` BLOB NOT NULL, `inputDigest` TEXT NOT NULL, `contextSnapshotJson` TEXT NOT NULL, `statProbabilities` BLOB NOT NULL, `tinyProbabilities` BLOB, `statModelVersion` INTEGER NOT NULL, `tinyModelVersion` INTEGER, `statInferenceNanos` INTEGER NOT NULL, `tinyInferenceNanos` INTEGER, `activeCheckpointId` TEXT, `candidateCheckpointId` TEXT, `stageAtDecision` TEXT NOT NULL, `mixedLambda` REAL NOT NULL, `isPromotionHoldout` INTEGER NOT NULL, `interventionState` TEXT NOT NULL, `resolutionStatus` TEXT NOT NULL, `censorReason` TEXT, `finalTargetActionId` TEXT, `consumedTerminalEventId` TEXT, PRIMARY KEY(`journeyId`))",
+        "fields": [
+          {
+            "fieldPath": "journeyId",
+            "columnName": "journeyId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "processInstanceId",
+            "columnName": "processInstanceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "triggerEventId",
+            "columnName": "triggerEventId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sequenceNo",
+            "columnName": "sequenceNo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtElapsedMs",
+            "columnName": "createdAtElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deadlineElapsedMs",
+            "columnName": "deadlineElapsedMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maximumActions",
+            "columnName": "maximumActions",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observedActionCount",
+            "columnName": "observedActionCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observedActionIdsCsv",
+            "columnName": "observedActionIdsCsv",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastLeafEnteredAtElapsedMs",
+            "columnName": "lastLeafEnteredAtElapsedMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastLeafActionId",
+            "columnName": "lastLeafActionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastLeafEventId",
+            "columnName": "lastLeafEventId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "journeyOutputSchemaVersion",
+            "columnName": "journeyOutputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "features",
+            "columnName": "features",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inputDigest",
+            "columnName": "inputDigest",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contextSnapshotJson",
+            "columnName": "contextSnapshotJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statProbabilities",
+            "columnName": "statProbabilities",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyProbabilities",
+            "columnName": "tinyProbabilities",
+            "affinity": "BLOB"
+          },
+          {
+            "fieldPath": "statModelVersion",
+            "columnName": "statModelVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyModelVersion",
+            "columnName": "tinyModelVersion",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "statInferenceNanos",
+            "columnName": "statInferenceNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyInferenceNanos",
+            "columnName": "tinyInferenceNanos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "activeCheckpointId",
+            "columnName": "activeCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "candidateCheckpointId",
+            "columnName": "candidateCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "stageAtDecision",
+            "columnName": "stageAtDecision",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mixedLambda",
+            "columnName": "mixedLambda",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPromotionHoldout",
+            "columnName": "isPromotionHoldout",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interventionState",
+            "columnName": "interventionState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resolutionStatus",
+            "columnName": "resolutionStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "censorReason",
+            "columnName": "censorReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "finalTargetActionId",
+            "columnName": "finalTargetActionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "consumedTerminalEventId",
+            "columnName": "consumedTerminalEventId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "journeyId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pending_journey_profileKey_resolutionStatus_deadlineElapsedMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "resolutionStatus",
+              "deadlineElapsedMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_journey_profileKey_resolutionStatus_deadlineElapsedMs` ON `${TABLE_NAME}` (`profileKey`, `resolutionStatus`, `deadlineElapsedMs`)"
+          },
+          {
+            "name": "index_pending_journey_profileKey_sessionId_triggerEventId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "sessionId",
+              "triggerEventId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_pending_journey_profileKey_sessionId_triggerEventId` ON `${TABLE_NAME}` (`profileKey`, `sessionId`, `triggerEventId`)"
+          },
+          {
+            "name": "index_pending_journey_profileKey_consumedTerminalEventId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "consumedTerminalEventId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_pending_journey_profileKey_consumedTerminalEventId` ON `${TABLE_NAME}` (`profileKey`, `consumedTerminalEventId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "journey_action_stat",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `contextKey` TEXT NOT NULL, `targetActionId` TEXT NOT NULL, `positiveMass` REAL NOT NULL, `exposureMass` REAL NOT NULL, `updatedAtEpochDay` INTEGER NOT NULL, PRIMARY KEY(`profileKey`, `contextKey`, `targetActionId`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contextKey",
+            "columnName": "contextKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetActionId",
+            "columnName": "targetActionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positiveMass",
+            "columnName": "positiveMass",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exposureMass",
+            "columnName": "exposureMass",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochDay",
+            "columnName": "updatedAtEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey",
+            "contextKey",
+            "targetActionId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_journey_action_stat_profileKey_targetActionId",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "targetActionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_journey_action_stat_profileKey_targetActionId` ON `${TABLE_NAME}` (`profileKey`, `targetActionId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "journey_training_sample",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sampleId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `journeyId` TEXT NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `journeyOutputSchemaVersion` INTEGER NOT NULL, `features` BLOB NOT NULL, `targetIndex` INTEGER NOT NULL, `targetActionId` TEXT NOT NULL, `targetFamily` TEXT NOT NULL, `journeyLength` INTEGER NOT NULL, `occurredEpochDay` INTEGER NOT NULL, `replayPriority` REAL NOT NULL, `trainingCount` INTEGER NOT NULL, `labelSource` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sampleId",
+            "columnName": "sampleId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "journeyId",
+            "columnName": "journeyId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "journeyOutputSchemaVersion",
+            "columnName": "journeyOutputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "features",
+            "columnName": "features",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetIndex",
+            "columnName": "targetIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetActionId",
+            "columnName": "targetActionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetFamily",
+            "columnName": "targetFamily",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "journeyLength",
+            "columnName": "journeyLength",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredEpochDay",
+            "columnName": "occurredEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replayPriority",
+            "columnName": "replayPriority",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingCount",
+            "columnName": "trainingCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "labelSource",
+            "columnName": "labelSource",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_journey_training_sample_profileKey_journeyId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "journeyId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_journey_training_sample_profileKey_journeyId` ON `${TABLE_NAME}` (`profileKey`, `journeyId`)"
+          },
+          {
+            "name": "index_journey_training_sample_profileKey_targetIndex",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "targetIndex"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_journey_training_sample_profileKey_targetIndex` ON `${TABLE_NAME}` (`profileKey`, `targetIndex`)"
+          },
+          {
+            "name": "index_journey_training_sample_profileKey_occurredEpochDay",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "occurredEpochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_journey_training_sample_profileKey_occurredEpochDay` ON `${TABLE_NAME}` (`profileKey`, `occurredEpochDay`)"
+          }
+        ]
+      },
+      {
+        "tableName": "journey_shadow_evaluation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileKey` TEXT NOT NULL, `evaluationSeq` INTEGER NOT NULL, `journeyId` TEXT NOT NULL, `occurredEpochDay` INTEGER NOT NULL, `trueLabel` TEXT NOT NULL, `journeyLength` INTEGER NOT NULL, `statTop1` INTEGER NOT NULL, `statTop3` INTEGER NOT NULL, `statReciprocalRank` REAL NOT NULL, `statBrier` REAL NOT NULL, `statLogLoss` REAL NOT NULL, `tinyTop1` INTEGER NOT NULL, `tinyTop3` INTEGER NOT NULL, `tinyReciprocalRank` REAL NOT NULL, `tinyBrier` REAL NOT NULL, `tinyLogLoss` REAL NOT NULL, `tinyTop1Confidence` REAL NOT NULL, `tinyCheckpointId` TEXT, `statInferenceNanos` INTEGER NOT NULL, `tinyInferenceNanos` INTEGER NOT NULL, `stage` TEXT NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `journeyOutputSchemaVersion` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evaluationSeq",
+            "columnName": "evaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "journeyId",
+            "columnName": "journeyId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredEpochDay",
+            "columnName": "occurredEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trueLabel",
+            "columnName": "trueLabel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "journeyLength",
+            "columnName": "journeyLength",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statTop1",
+            "columnName": "statTop1",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statTop3",
+            "columnName": "statTop3",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statReciprocalRank",
+            "columnName": "statReciprocalRank",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statBrier",
+            "columnName": "statBrier",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statLogLoss",
+            "columnName": "statLogLoss",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyTop1",
+            "columnName": "tinyTop1",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyTop3",
+            "columnName": "tinyTop3",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyReciprocalRank",
+            "columnName": "tinyReciprocalRank",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyBrier",
+            "columnName": "tinyBrier",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyLogLoss",
+            "columnName": "tinyLogLoss",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyTop1Confidence",
+            "columnName": "tinyTop1Confidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyCheckpointId",
+            "columnName": "tinyCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "statInferenceNanos",
+            "columnName": "statInferenceNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyInferenceNanos",
+            "columnName": "tinyInferenceNanos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stage",
+            "columnName": "stage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "journeyOutputSchemaVersion",
+            "columnName": "journeyOutputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_journey_shadow_evaluation_profileKey_evaluationSeq",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "evaluationSeq"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_journey_shadow_evaluation_profileKey_evaluationSeq` ON `${TABLE_NAME}` (`profileKey`, `evaluationSeq`)"
+          },
+          {
+            "name": "index_journey_shadow_evaluation_profileKey_journeyId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "journeyId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_journey_shadow_evaluation_profileKey_journeyId` ON `${TABLE_NAME}` (`profileKey`, `journeyId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "local_parameter_preset",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`presetId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `domainId` TEXT NOT NULL, `fingerprint` TEXT NOT NULL, `localPayloadJson` TEXT NOT NULL, `coarseFeaturesJson` TEXT NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `lastOrganicUsedAtEpochMs` INTEGER, `organicUseCount` INTEGER NOT NULL, `source` TEXT NOT NULL, `schemaVersion` INTEGER NOT NULL, PRIMARY KEY(`presetId`))",
+        "fields": [
+          {
+            "fieldPath": "presetId",
+            "columnName": "presetId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "domainId",
+            "columnName": "domainId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fingerprint",
+            "columnName": "fingerprint",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localPayloadJson",
+            "columnName": "localPayloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coarseFeaturesJson",
+            "columnName": "coarseFeaturesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastOrganicUsedAtEpochMs",
+            "columnName": "lastOrganicUsedAtEpochMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "organicUseCount",
+            "columnName": "organicUseCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schemaVersion",
+            "columnName": "schemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "presetId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_local_parameter_preset_profileKey_domainId_fingerprint",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "domainId",
+              "fingerprint"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_local_parameter_preset_profileKey_domainId_fingerprint` ON `${TABLE_NAME}` (`profileKey`, `domainId`, `fingerprint`)"
+          },
+          {
+            "name": "index_local_parameter_preset_profileKey_domainId_lastOrganicUsedAtEpochMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "domainId",
+              "lastOrganicUsedAtEpochMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_parameter_preset_profileKey_domainId_lastOrganicUsedAtEpochMs` ON `${TABLE_NAME}` (`profileKey`, `domainId`, `lastOrganicUsedAtEpochMs`)"
+          }
+        ]
+      },
+      {
+        "tableName": "preset_usage_stat",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `domainId` TEXT NOT NULL, `contextKey` TEXT NOT NULL, `presetId` TEXT NOT NULL, `positiveMass` REAL NOT NULL, `exposureMass` REAL NOT NULL, `updatedAtEpochDay` INTEGER NOT NULL, PRIMARY KEY(`profileKey`, `domainId`, `contextKey`, `presetId`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "domainId",
+            "columnName": "domainId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contextKey",
+            "columnName": "contextKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "presetId",
+            "columnName": "presetId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positiveMass",
+            "columnName": "positiveMass",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exposureMass",
+            "columnName": "exposureMass",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochDay",
+            "columnName": "updatedAtEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey",
+            "domainId",
+            "contextKey",
+            "presetId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_preset_usage_stat_profileKey_domainId_presetId",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "domainId",
+              "presetId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_preset_usage_stat_profileKey_domainId_presetId` ON `${TABLE_NAME}` (`profileKey`, `domainId`, `presetId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "targeted_prediction_feedback",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`feedbackId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `predictionTask` TEXT NOT NULL, `decisionId` TEXT NOT NULL, `candidateId` TEXT, `feedbackType` TEXT NOT NULL, `isolatedFromTraining` INTEGER NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`feedbackId`))",
+        "fields": [
+          {
+            "fieldPath": "feedbackId",
+            "columnName": "feedbackId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "predictionTask",
+            "columnName": "predictionTask",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "decisionId",
+            "columnName": "decisionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateId",
+            "columnName": "candidateId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feedbackType",
+            "columnName": "feedbackType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isolatedFromTraining",
+            "columnName": "isolatedFromTraining",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "feedbackId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_targeted_prediction_feedback_profileKey_predictionTask_createdAtEpochMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "predictionTask",
+              "createdAtEpochMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_targeted_prediction_feedback_profileKey_predictionTask_createdAtEpochMs` ON `${TABLE_NAME}` (`profileKey`, `predictionTask`, `createdAtEpochMs`)"
+          }
+        ]
+      },
+      {
+        "tableName": "preset_recommendation_interaction",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`interactionId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `domainId` TEXT NOT NULL, `opportunityId` TEXT NOT NULL, `candidateId` TEXT NOT NULL, `candidateFingerprint` TEXT NOT NULL, `state` TEXT NOT NULL, `shownAtEpochMs` INTEGER NOT NULL, `appliedAtEpochMs` INTEGER, `resolvedAtEpochMs` INTEGER, `resolutionFingerprint` TEXT, `feedbackWeight` REAL, `checkpointId` TEXT, PRIMARY KEY(`interactionId`))",
+        "fields": [
+          {
+            "fieldPath": "interactionId",
+            "columnName": "interactionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "domainId",
+            "columnName": "domainId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "opportunityId",
+            "columnName": "opportunityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateId",
+            "columnName": "candidateId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateFingerprint",
+            "columnName": "candidateFingerprint",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shownAtEpochMs",
+            "columnName": "shownAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appliedAtEpochMs",
+            "columnName": "appliedAtEpochMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "resolvedAtEpochMs",
+            "columnName": "resolvedAtEpochMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "resolutionFingerprint",
+            "columnName": "resolutionFingerprint",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feedbackWeight",
+            "columnName": "feedbackWeight",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "checkpointId",
+            "columnName": "checkpointId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "interactionId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_preset_recommendation_interaction_profileKey_domainId_state_shownAtEpochMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "domainId",
+              "state",
+              "shownAtEpochMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_preset_recommendation_interaction_profileKey_domainId_state_shownAtEpochMs` ON `${TABLE_NAME}` (`profileKey`, `domainId`, `state`, `shownAtEpochMs`)"
+          },
+          {
+            "name": "index_preset_recommendation_interaction_profileKey_opportunityId_candidateId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "opportunityId",
+              "candidateId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_preset_recommendation_interaction_profileKey_opportunityId_candidateId` ON `${TABLE_NAME}` (`profileKey`, `opportunityId`, `candidateId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "task_model_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileKey` TEXT NOT NULL, `modelTask` TEXT NOT NULL, `modelGeneration` INTEGER NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `outputSchemaVersion` INTEGER NOT NULL, `activeCheckpointId` TEXT, `candidateCheckpointId` TEXT, `trainingRevision` INTEGER NOT NULL, `stage` TEXT NOT NULL, `mixedLambda` REAL NOT NULL, `consecutivePassingWindows` INTEGER NOT NULL, `consecutiveFailingWindows` INTEGER NOT NULL, `validSampleCount` INTEGER NOT NULL, `nonNoneSampleCount` INTEGER NOT NULL, `targetFamilyCount` INTEGER NOT NULL, `ece` REAL NOT NULL, `healthState` TEXT NOT NULL, `lastTransitionReason` TEXT NOT NULL, `lastEvaluationSeq` INTEGER NOT NULL, `updatedAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`profileKey`, `modelTask`))",
+        "fields": [
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelTask",
+            "columnName": "modelTask",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelGeneration",
+            "columnName": "modelGeneration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outputSchemaVersion",
+            "columnName": "outputSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeCheckpointId",
+            "columnName": "activeCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "candidateCheckpointId",
+            "columnName": "candidateCheckpointId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "trainingRevision",
+            "columnName": "trainingRevision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stage",
+            "columnName": "stage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mixedLambda",
+            "columnName": "mixedLambda",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consecutivePassingWindows",
+            "columnName": "consecutivePassingWindows",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consecutiveFailingWindows",
+            "columnName": "consecutiveFailingWindows",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validSampleCount",
+            "columnName": "validSampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nonNoneSampleCount",
+            "columnName": "nonNoneSampleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetFamilyCount",
+            "columnName": "targetFamilyCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ece",
+            "columnName": "ece",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "healthState",
+            "columnName": "healthState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastTransitionReason",
+            "columnName": "lastTransitionReason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastEvaluationSeq",
+            "columnName": "lastEvaluationSeq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updatedAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileKey",
+            "modelTask"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_task_model_state_profileKey_stage",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "stage"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_task_model_state_profileKey_stage` ON `${TABLE_NAME}` (`profileKey`, `stage`)"
+          }
+        ]
+      },
+      {
+        "tableName": "task_training_batch_journal",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`batchId` TEXT NOT NULL, `profileKey` TEXT NOT NULL, `modelTask` TEXT NOT NULL, `expectedTrainingRevision` INTEGER NOT NULL, `selectedRowIds` TEXT NOT NULL, `state` TEXT NOT NULL, `createdAtEpochMs` INTEGER NOT NULL, `committedAtEpochMs` INTEGER, PRIMARY KEY(`batchId`))",
+        "fields": [
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelTask",
+            "columnName": "modelTask",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedTrainingRevision",
+            "columnName": "expectedTrainingRevision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selectedRowIds",
+            "columnName": "selectedRowIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "createdAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "committedAtEpochMs",
+            "columnName": "committedAtEpochMs",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "batchId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_task_training_batch_journal_profileKey_modelTask_state_createdAtEpochMs",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "modelTask",
+              "state",
+              "createdAtEpochMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_task_training_batch_journal_profileKey_modelTask_state_createdAtEpochMs` ON `${TABLE_NAME}` (`profileKey`, `modelTask`, `state`, `createdAtEpochMs`)"
+          }
+        ]
+      },
+      {
+        "tableName": "preset_training_sample",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileKey` TEXT NOT NULL, `domainId` TEXT NOT NULL, `opportunityId` TEXT NOT NULL, `candidateId` TEXT NOT NULL, `features` BLOB NOT NULL, `label` INTEGER NOT NULL, `occurredEpochDay` INTEGER NOT NULL, `trainingCount` INTEGER NOT NULL, `labelSource` TEXT NOT NULL, `sampleWeight` REAL NOT NULL, `feedbackSource` TEXT NOT NULL, `weightConfigVersion` INTEGER NOT NULL, `naturalHoldoutEligible` INTEGER NOT NULL, `interactionId` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "domainId",
+            "columnName": "domainId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "opportunityId",
+            "columnName": "opportunityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateId",
+            "columnName": "candidateId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "features",
+            "columnName": "features",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredEpochDay",
+            "columnName": "occurredEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingCount",
+            "columnName": "trainingCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "labelSource",
+            "columnName": "labelSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sampleWeight",
+            "columnName": "sampleWeight",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feedbackSource",
+            "columnName": "feedbackSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weightConfigVersion",
+            "columnName": "weightConfigVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "naturalHoldoutEligible",
+            "columnName": "naturalHoldoutEligible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interactionId",
+            "columnName": "interactionId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_preset_training_sample_profileKey_domainId_opportunityId_candidateId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "domainId",
+              "opportunityId",
+              "candidateId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_preset_training_sample_profileKey_domainId_opportunityId_candidateId` ON `${TABLE_NAME}` (`profileKey`, `domainId`, `opportunityId`, `candidateId`)"
+          },
+          {
+            "name": "index_preset_training_sample_profileKey_domainId_label",
+            "unique": false,
+            "columnNames": [
+              "profileKey",
+              "domainId",
+              "label"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_preset_training_sample_profileKey_domainId_label` ON `${TABLE_NAME}` (`profileKey`, `domainId`, `label`)"
+          }
+        ]
+      },
+      {
+        "tableName": "preset_shadow_evaluation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rowId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `profileKey` TEXT NOT NULL, `domainId` TEXT NOT NULL, `opportunityId` TEXT NOT NULL, `candidateId` TEXT NOT NULL, `label` INTEGER NOT NULL, `statScore` REAL NOT NULL, `tinyScore` REAL NOT NULL, `recentBaselineScore` REAL NOT NULL, `frequencyBaselineScore` REAL NOT NULL, `tinyCheckpointId` TEXT NOT NULL, `occurredEpochDay` INTEGER NOT NULL, `featureSchemaVersion` INTEGER NOT NULL, `evaluationSource` TEXT NOT NULL, `naturalHoldoutEligible` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "rowId",
+            "columnName": "rowId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileKey",
+            "columnName": "profileKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "domainId",
+            "columnName": "domainId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "opportunityId",
+            "columnName": "opportunityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateId",
+            "columnName": "candidateId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statScore",
+            "columnName": "statScore",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyScore",
+            "columnName": "tinyScore",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recentBaselineScore",
+            "columnName": "recentBaselineScore",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frequencyBaselineScore",
+            "columnName": "frequencyBaselineScore",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tinyCheckpointId",
+            "columnName": "tinyCheckpointId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredEpochDay",
+            "columnName": "occurredEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "featureSchemaVersion",
+            "columnName": "featureSchemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evaluationSource",
+            "columnName": "evaluationSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "naturalHoldoutEligible",
+            "columnName": "naturalHoldoutEligible",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "rowId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_preset_shadow_evaluation_profileKey_domainId_opportunityId_candidateId",
+            "unique": true,
+            "columnNames": [
+              "profileKey",
+              "domainId",
+              "opportunityId",
+              "candidateId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_preset_shadow_evaluation_profileKey_domainId_opportunityId_candidateId` ON `${TABLE_NAME}` (`profileKey`, `domainId`, `opportunityId`, `candidateId`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a5dfce04885c816574f719fde096cd5b')"
+    ]
+  }
+}

@@ -36,10 +36,6 @@ import com.kyant.monet.dynamicColorScheme
 import com.kyant.monet.n1
 import com.kyant.monet.toColor
 import com.kyant.monet.toSrgb
-import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
-import top.yukonga.miuix.kmp.theme.ColorSchemeMode
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.theme.ThemeController
 
 /**
  * 主题的输入：由宿主（`:app`）从设置里读出后传进来。
@@ -58,11 +54,13 @@ data class AhuThemeConfig(
 
 @Composable
 fun AHUTheme(config: AhuThemeConfig, content: @Composable () -> Unit) {
-    val themeColorHex = config.themeColorHex
-    val themeMode = config.themeMode
-    val appUiTheme = config.appUiTheme
-    val componentSlotOverrides = config.componentSlotOverrides
-    val isUiThemePreferenceReady = config.isPreferenceReady
+    val provider = com.ahu.ahutong.ui.theme.pack.AppearanceRegistry.provider
+    val effectiveConfig = com.ahu.ahutong.ui.theme.pack.AppearanceRegistry.effective(config)
+    val themeColorHex = effectiveConfig.themeColorHex
+    val themeMode = effectiveConfig.themeMode
+    val appUiTheme = effectiveConfig.appUiTheme
+    val componentSlotOverrides = effectiveConfig.componentSlotOverrides
+    val isUiThemePreferenceReady = effectiveConfig.isPreferenceReady
     val isDarkTheme = themeMode.resolve(isSystemInDarkTheme())
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -165,50 +163,23 @@ fun AHUTheme(config: AhuThemeConfig, content: @Composable () -> Unit) {
                 )
             }
         }
-        val miuixUsesSystemColor = themeColorHex == null ||
-            (themeColorHex == DEFAULT_THEME_COLOR && appUiTheme != AppUiTheme.MIUIX)
-        val miuixColorSchemeMode = when {
-            // Miuix's own fixed palettes are the HyperOS defaults: #3482FF in light mode and
-            // #277AF7 in dark mode. Generating a Monet palette from that blue changes the control
-            // colors and makes "默认" look like a system-derived theme instead.
-            usesBuiltInDefaultColor && isDarkTheme -> ColorSchemeMode.Dark
-            usesBuiltInDefaultColor -> ColorSchemeMode.Light
-            miuixUsesSystemColor -> ColorSchemeMode.MonetSystem
-            isDarkTheme -> ColorSchemeMode.MonetDark
-            else -> ColorSchemeMode.MonetLight
-        }
-        val miuixController = remember(keyColor, isDarkTheme, miuixColorSchemeMode) {
-            ThemeController(
-                colorSchemeMode = miuixColorSchemeMode,
-                keyColor = keyColor.takeUnless { miuixUsesSystemColor },
-                isDark = isDarkTheme
-            )
-        }
         MaterialTheme(colorScheme = colorScheme) {
             val liquidGlassTokens = rememberLiquidGlassTokens(
                 enabled = isUiThemePreferenceReady && appUiTheme.usesLiquidGlass
             )
-            // Theme Park：套装 + 槽位覆盖 → 实际生效的组件包（页面层无感）
-            val componentPack = remember(appUiTheme, componentSlotOverrides) {
+            val componentPack = remember(appUiTheme, componentSlotOverrides, provider) {
                 appUiTheme.componentPack.mixing(componentSlotOverrides)
             }
-            MiuixTheme(controller = miuixController) {
+            val themedContent: @Composable () -> Unit = {
                 CompositionLocalProvider(
                     LocalContentColor provides if (isDarkTheme) 100.n1 else 0.n1,
                     LocalAppUiTheme provides appUiTheme,
                     LocalIsLiquidGlassEnabled provides liquidGlassTokens.enabled,
                     LocalLiquidGlassTokens provides liquidGlassTokens,
                     LocalComponentPack provides componentPack
-                ) {
-                    // Keep the root node stable so switching UI libraries never recreates the
-                    // navigation subtree. The transparent scaffold is also Miuix's popup host.
-                    MiuixScaffold(
-                        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-                        containerColor = Color.Transparent,
-                        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-                    ) { content() }
-                }
+                ) { content() }
             }
+            if (provider != null) provider.Wrap(effectiveConfig, themedContent) else themedContent()
         }
     }
 }

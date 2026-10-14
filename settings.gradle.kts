@@ -27,7 +27,8 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "AHUTong"
-include (":app")
+// Retained migration/reference sources must not accidentally produce the old monolithic APK.
+if (providers.gradleProperty("includeLegacyApp").orNull == "true") include(":app")
 include (":core:model")
 include (":core:common")
 include (":core:designsystem")
@@ -50,3 +51,37 @@ include (":data:update")
 include (":background")
 include (":feature:recharge")
 include (":feature:circle")
+include (":plugins:campus_circle")
+include (":plugins:campus_guide")
+include (":plugins:weather")
+include (":plugins:repository")
+include (":plugins:chaoxing")
+include (":plugins:appearance")
+include (":plugins:network_recharge")
+include (":plugins:bathroom")
+include (":plugins:electricity")
+include (":plugins:campus_card")
+
+include(":plugins:account")
+
+include(":plugins:schedule")
+
+include(":plugins:grade_exam")
+
+include(":plugins:evaluation")
+
+include(":plugins:program_completion")
+
+include(":plugins:free_classroom")
+
+include(":plugins:personalization")
+
+include(":host")
+
+include(":plugins:campus_notices")
+
+include(":plugins:lost_found")
+
+include(":plugins:storage_migration")
+
+include(":plugins:student_mail")

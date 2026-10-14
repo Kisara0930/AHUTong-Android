@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
  * 1. 未声明 CAMERA 的插件调 camera() → PluginCapabilityDeniedException
  * 2. 未声明 PLUGIN_STORAGE 的插件调 pluginFilesDir() → 同异常
  * 3. 两个不同插件 id 的 pluginFilesDir() 路径互不相同
- * 4. 签名载荷 v1/v2 判定（无 lib 走旧载荷、有 lib 走新载荷）
+ * 4. AHUP v3 验签由 AhupPackageVerifierTest 覆盖
  * 5. ABI 目录选择逻辑
  * 6. close() 触发宿主 onClose 回调且无能力门控；不带回调时安全空操作
  *
@@ -94,18 +94,6 @@ class PluginCameraHostGateTest {
         assertTrue(e !is PluginCapabilityDeniedException)
     }
 
-    @Test
-    fun signaturePayloadV1WithoutLibsAndV2WithLibs() {
-        val dex = ByteArray(16) { 1 }
-        val icon = ByteArray(8) { 2 }
-        val so1 = ByteArray(4) { 3 }
-        val so2 = ByteArray(4) { 4 }
-        val v2Payload = signaturePayload(dex, icon, mapOf("lib/arm64-v8a/b.so" to so2, "lib/arm64-v8a/a.so" to so1))
-        val expected = dex + icon + so1 + so2 // 按相对路径排序：a.so 在前
-        assertTrue(v2Payload.contentEquals(expected), "v2 载荷须按相对路径排序拼接 so")
-        val v1Payload = signaturePayload(dex, icon, emptyMap())
-        assertTrue(v1Payload.contentEquals(dex + icon), "v1 载荷 = dex + icon")
-    }
 
     @Test
     fun abiDirSelectionFollowsSupportedAbisOrder() {

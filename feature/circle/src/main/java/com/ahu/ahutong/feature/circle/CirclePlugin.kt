@@ -19,11 +19,10 @@ class CirclePlugin : AhuPlugin {
         id = "campus_circle",
         title = "校园圈子",
         summary = "安大 BBS 只读浏览",
-        // 运行期装载时图标以包内 icon.png 为准（装载器覆写）；R 资源不进 dex，
-        // 这里只能给占位值——运行期插件严禁引用 R（AAR 的 classes.jar 不含 R.class）
+        // 插件列表图标来自签名包内 icon.png；页面资源来自独立链接的 resources.apk。
         icon = PluginIcon.Resource(0),
         tint = 0xFF5C6BC0, // 靛蓝，与现有小工具配色同族
-        version = "0.1.0",
+        version = "1.0.0",
         author = "AHUTong"
     )
 
