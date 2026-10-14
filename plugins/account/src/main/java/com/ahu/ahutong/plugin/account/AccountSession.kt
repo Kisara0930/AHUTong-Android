@@ -47,10 +47,18 @@ class AccountSession : CampusSessionService {
         .cookieJar(CookieManager.forGeneration(AccountGeneration.current)).build()
 
     init {
+        val epoch = AccountGeneration.current
         // Rust-only legacy sessions may predate the encrypted OkHttp cookie jar.
         if (CookieManager.cookieJar.allCookies.isEmpty()) {
-            val epoch = AccountGeneration.current
             runCatching { importCookies(SessionStore.rustCookies(), null, epoch) }
+        }
+        // A new process starts Anonymous even when its encrypted identity survived.
+        // Restore that identity before dependent plugins evaluate their login gate;
+        // an explicitly expired session must still require authentication.
+        AccountGeneration.withCurrent(epoch) {
+            if (SessionStore.isLoggedIn() && AhuSessionState.status.value == AhuSessionState.Status.Anonymous) {
+                AhuSessionState.markAuthenticated()
+            }
         }
     }
 

@@ -13,8 +13,8 @@ android {
         applicationId = "com.ahu.ahutong.plugin.account"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
     }
     androidResources {
         // Stable allocation in the official plugin catalog; host keeps 0x7f.
@@ -72,7 +72,7 @@ tasks.register<Exec>("packageAhup") {
         layout.buildDirectory.file("outputs/apk/release/account-release-unsigned.apk").get().asFile.absolutePath,
         rootProject.file("dist/ahup/account.ahup").absolutePath,
         "--id", "account", "--title", "账户与认证", "--summary", "账户与认证",
-        "--version", "1.0.1", "--version-code", "2", "--author", "AHUTong",
+        "--version", "1.0.2", "--version-code", "3", "--author", "AHUTong",
         "--entry", "com.ahu.ahutong.plugin.account.AccountPlugin",
         "--capabilities", "NETWORK,PLUGIN_STORAGE",
         "--required",

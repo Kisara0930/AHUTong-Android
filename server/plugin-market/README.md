@@ -141,13 +141,13 @@ python -m unittest discover -s server/plugin-market -v
 宿主标记示例：
 
 ```json
-{"schemaVersion":1,"product":"ahutong-plugin-host","packageName":"com.ahu.ahutong","hostApiVersion":1,"runtimeVersion":"1","requiredPluginVersions":{"account":1}}
+{"schemaVersion":1,"product":"ahutong-plugin-host","packageName":"com.ahu.ahutong","hostApiVersion":1,"runtimeVersion":"1","requiredPluginVersions":{"account":3,"appearance":2}}
 ```
 
-如果标记没有 requiredPluginVersions，通过 CLI 显式指定实际必需版本，例如当前产物的 `--required-plugin account:2 --required-plugin appearance:2`；每个必需版本都必须实际内置于 `assets/bootstrap/<id>.ahup`，发布器再次校验其真实签名、ID、版本和宿主兼容字段。隐藏存储迁移组件只供旧用户初始化，通常不列为所有新安装的必需插件。
+如果标记没有 requiredPluginVersions，通过 CLI 显式指定实际必需版本，例如当前产物的 `--required-plugin account:3 --required-plugin appearance:2`；每个必需版本都必须实际内置于 `assets/bootstrap/<id>.ahup`，发布器再次校验其真实签名、ID、版本和宿主兼容字段。隐藏存储迁移组件只供旧用户初始化，通常不列为所有新安装的必需插件。
 
 ```powershell
-python server/plugin-market/publish.py publish-host C:/artifacts/ahutong-host-release.apk --store C:/ahutong-market --trusted-cert C:/keys/official.der --signing-config C:/local/config.local.json --required-plugin account:1 --release-notes-file C:/artifacts/host-notes.txt
+python server/plugin-market/publish.py publish-host C:/artifacts/ahutong-host-release.apk --store C:/ahutong-market --trusted-cert C:/keys/official.der --signing-config C:/local/config.local.json --release-notes-file C:/artifacts/host-notes.txt
 python server/plugin-market/publish.py withdraw-host 100 --store C:/ahutong-market --reason '宿主兼容性回归'
 ```
 

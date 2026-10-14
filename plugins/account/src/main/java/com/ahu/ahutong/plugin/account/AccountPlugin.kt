@@ -13,7 +13,7 @@ import com.ahu.ahutong.plugin.account.ui.SavedAccountsDialog
 
 class AccountPlugin : AhuPlugin, PluginLifecycle {
     override val meta = PluginMeta("account", "账户与认证", "校园账户、身份认证与账号管理",
-        PluginIcon.Bytes(byteArrayOf()), 0xff4263eb, "1.0.1", "AHUTong")
+        PluginIcon.Bytes(byteArrayOf()), 0xff4263eb, "1.0.2", "AHUTong")
     override val capabilities = setOf(PluginCapability.NETWORK, PluginCapability.PLUGIN_STORAGE)
     private lateinit var session: AccountSession
 
