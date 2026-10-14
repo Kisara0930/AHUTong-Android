@@ -13,6 +13,7 @@ import com.ahu.ahutong.data.model.Course
 import com.ahu.ahutong.data.model.ScheduleConfigBean
 import com.ahu.ahutong.data.schedule.ConfigSource
 import com.ahu.ahutong.data.schedule.ScheduleSource
+import com.ahu.ahutong.data.schedule.ScheduleSemester
 import com.ahu.ahutong.data.schedule.ScheduleHoliday
 import com.ahu.ahutong.data.schedule.ScheduleHolidaySource
 import com.ahu.ahutong.data.schedule.scheduleHolidayYears
@@ -50,6 +51,44 @@ class ScheduleViewModel @Inject constructor(
     val TAG = "ScheduleViewModel"
     val schedule = MutableLiveData<AhuResult<List<Course>>>()
     val nextSchedule = MutableLiveData<AhuResult<List<Course>>>()
+    val isNextScheduleLoading = MutableLiveData(false)
+    private var nextScheduleJob: Job? = null
+    private var nextRequestRevision = 0L
+    val semesters = MutableLiveData<AhuResult<List<ScheduleSemester>>>()
+    val isSemestersLoading = MutableLiveData(false)
+    val semesterSchedule = MutableLiveData<AhuResult<List<Course>>>()
+    val previewedSemesterId = MutableLiveData<Int?>()
+    val isSemesterScheduleLoading = MutableLiveData(false)
+    private var semestersJob: Job? = null
+    private var catalogueRequestRevision = 0L
+    private var semesterScheduleJob: Job? = null
+    private var semesterRequestRevision = 0L
+    private val semesterSchedules = mutableMapOf<Int, List<Course>>()
+    private var previewCacheIdentity: Triple<Boolean, String?, Boolean>? = null
+
+    val currentAccountId: String?
+        get() = session.currentUser()?.xh
+
+    private fun previewIdentity() =
+        Triple(session.isLoggedIn(), currentAccountId, scheduleSource.usesMockData())
+
+    private fun ensurePreviewIdentity(): Triple<Boolean, String?, Boolean> {
+        val identity = previewIdentity()
+        if (identity != previewCacheIdentity) {
+            catalogueRequestRevision++
+            nextRequestRevision++
+            semestersJob?.cancel()
+            nextScheduleJob?.cancel()
+            closeSemesterPreview()
+            semesterSchedules.clear()
+            semesters.value = null
+            nextSchedule.value = null
+            isSemestersLoading.value = false
+            isNextScheduleLoading.value = false
+            previewCacheIdentity = identity
+        }
+        return identity
+    }
 
     val schoolYear: String
         get() = weekConfig.cachedSemesterKey()?.schoolYear
@@ -180,14 +219,76 @@ class ScheduleViewModel @Inject constructor(
     }
 
     fun refreshNextSchedule(isRefresh: Boolean = false) {
-        viewModelScope.launchSafe {
-            if (!session.isLoggedIn() && !scheduleSource.usesMockData()) {
-                nextSchedule.value = AhuResult.Failure(AhuError.Unauthorized("请先登录"))
-                return@launchSafe
+        val identity = ensurePreviewIdentity()
+        val revision = ++nextRequestRevision
+        nextScheduleJob?.cancel()
+        nextScheduleJob = viewModelScope.launchSafe {
+            isNextScheduleLoading.value = true
+            try {
+                val result = if (!session.isLoggedIn() && !scheduleSource.usesMockData()) {
+                    AhuResult.Failure(AhuError.Unauthorized("请先登录"))
+                } else {
+                    scheduleSource.next(isRefresh = isRefresh)
+                }
+                if (revision == nextRequestRevision && identity == previewIdentity()) nextSchedule.value = result
+            } finally {
+                if (revision == nextRequestRevision) isNextScheduleLoading.value = false
             }
-
-            nextSchedule.value = scheduleSource.next(isRefresh = isRefresh)
         }
+    }
+
+    fun loadSemesters(isRefresh: Boolean = false) {
+        val identity = ensurePreviewIdentity()
+        if (semestersJob?.isActive == true || (!isRefresh && semesters.value?.isSuccess == true)) return
+        val revision = ++catalogueRequestRevision
+        semestersJob = viewModelScope.launchSafe {
+            isSemestersLoading.value = true
+            try {
+                val result = if (!session.isLoggedIn() && !scheduleSource.usesMockData()) {
+                    AhuResult.Failure(AhuError.Unauthorized("请先登录"))
+                } else {
+                    scheduleSource.semesters()
+                }
+                if (revision == catalogueRequestRevision && identity == previewIdentity()) semesters.value = result
+            } finally {
+                if (revision == catalogueRequestRevision) isSemestersLoading.value = false
+            }
+        }
+    }
+
+    fun loadSemester(semesterId: Int, isRefresh: Boolean = false) {
+        val identity = ensurePreviewIdentity()
+        val revision = ++semesterRequestRevision
+        semesterScheduleJob?.cancel()
+        previewedSemesterId.value = semesterId
+        val cached = semesterSchedules[semesterId]
+        semesterSchedule.value = cached?.let { AhuResult.Success(it) }
+        isSemesterScheduleLoading.value = false
+        if (cached != null && !isRefresh) return
+        semesterScheduleJob = viewModelScope.launchSafe {
+            isSemesterScheduleLoading.value = true
+            try {
+                val result = if (!session.isLoggedIn() && !scheduleSource.usesMockData()) {
+                    AhuResult.Failure(AhuError.Unauthorized("请先登录"))
+                } else {
+                    scheduleSource.semester(semesterId)
+                }
+                if (revision == semesterRequestRevision && identity == previewIdentity()) {
+                    result.valueOrNull()?.let { semesterSchedules[semesterId] = it }
+                    semesterSchedule.value = result
+                }
+            } finally {
+                if (revision == semesterRequestRevision) isSemesterScheduleLoading.value = false
+            }
+        }
+    }
+
+    fun closeSemesterPreview() {
+        semesterRequestRevision++
+        semesterScheduleJob?.cancel()
+        previewedSemesterId.value = null
+        semesterSchedule.value = null
+        isSemesterScheduleLoading.value = false
     }
 
     fun loadConfig() {
@@ -246,6 +347,17 @@ class ScheduleViewModel @Inject constructor(
 
     fun clear() {
         backgroundRefreshJob?.cancel()
+        catalogueRequestRevision++
+        nextRequestRevision++
+        semestersJob?.cancel()
+        nextScheduleJob?.cancel()
+        closeSemesterPreview()
+        semesterSchedules.clear()
+        previewCacheIdentity = null
+        semesters.value = null
+        isSemestersLoading.value = false
+        nextSchedule.value = null
+        isNextScheduleLoading.value = false
         holidayStartDate = null
         holidayWeekCount = 20
         scheduleHolidays.value = emptyMap()
