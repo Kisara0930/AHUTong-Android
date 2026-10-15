@@ -80,7 +80,7 @@ class RepositoryAhuSession(
         }
         // 续期成功即回到已认证：协调器只负责并发与代号，登录态的写入留在会话层。
         if (refreshed) {
-            SessionRefreshCoordinator.commitIfCurrent(observedGeneration + 1) {
+            SessionRefreshCoordinator.commitIfCurrent(observedGeneration + 1, refreshScope) {
                 if (AhuSessionState.status.value != AhuSessionState.Status.Anonymous) {
                     AhuSessionState.markAuthenticated()
                 }
@@ -89,7 +89,7 @@ class RepositoryAhuSession(
             // failureKindOf 和 commitIfCurrent 共用非可重入锁，先读取失败类型再提交状态。
             val rejected = SessionRefreshCoordinator.failureKindOf(observedGeneration, refreshScope) ==
                 SessionRefreshCoordinator.FailureKind.REJECTED
-            SessionRefreshCoordinator.commitIfCurrent(observedGeneration) {
+            SessionRefreshCoordinator.commitIfCurrent(observedGeneration, refreshScope) {
                 // 手动登录可能已经推进代号；旧失败无权覆盖那个新会话。
                 // 只有凭据被明确拒绝（REJECTED）才宣告过期、触发重新登录引导；
                 // 瞬时失败（网络抖动/超时）保持静默——冷却窗外下个请求会自动再试，

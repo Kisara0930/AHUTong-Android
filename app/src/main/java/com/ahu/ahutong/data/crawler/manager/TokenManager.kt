@@ -120,7 +120,7 @@ object TokenManager {
         }
 
     private suspend fun fetchUsableToken(): String? {
-        val observedGeneration = SessionRefreshCoordinator.currentGeneration()
+        val observedGeneration = SessionRefreshCoordinator.currentGeneration(SessionRefreshCoordinator.Scope.CENTRAL_CAS)
         val firstAttempt = withContext(Dispatchers.IO) { fetchToken() }
         val result = if (firstAttempt.requiresSessionRefresh &&
             refreshStoredSession(observedGeneration, firstAttempt.casLoginUrl)
@@ -162,7 +162,7 @@ object TokenManager {
         }
         // 与 RepositoryAhuSession 同一约定：续期成功由会话层写登录态。
         if (refreshed) {
-            SessionRefreshCoordinator.commitIfCurrent(observedGeneration + 1) {
+            SessionRefreshCoordinator.commitIfCurrent(observedGeneration + 1, SessionRefreshCoordinator.Scope.CENTRAL_CAS) {
                 if (AhuSessionState.status.value != AhuSessionState.Status.Anonymous) {
                     AhuSessionState.markAuthenticated()
                 }
@@ -171,7 +171,7 @@ object TokenManager {
             val rejected = SessionRefreshCoordinator.failureKindOf(
                 observedGeneration, SessionRefreshCoordinator.Scope.CENTRAL_CAS
             ) == SessionRefreshCoordinator.FailureKind.REJECTED
-            SessionRefreshCoordinator.commitIfCurrent(observedGeneration) {
+            SessionRefreshCoordinator.commitIfCurrent(observedGeneration, SessionRefreshCoordinator.Scope.CENTRAL_CAS) {
                 // 只有凭据被明确拒绝才宣告过期；瞬时失败保持静默，冷却窗外自愈。
                 // 若手动登录已推进代号，这个旧失败不会进入提交块，也就不能覆盖新会话。
                 if (rejected && AhuSessionState.status.value != AhuSessionState.Status.Anonymous) {

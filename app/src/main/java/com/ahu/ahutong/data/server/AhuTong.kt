@@ -5,11 +5,14 @@ import com.ahu.ahutong.BuildConfig
 import com.ahu.ahutong.data.server.model.ApkUpdateInfo
 import com.ahu.ahutong.data.server.model.Captcha
 import com.ahu.ahutong.data.server.model.GrayFeatureDecision
+import com.ahu.ahutong.data.preview.EarlyAccessMembership
+import com.ahu.ahutong.data.preview.EarlyAccessRequest
 import com.ahu.ahutong.data.server.model.SchoolCalendarYearsResponse
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import com.ahu.ahutong.data.network.retrofit
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -28,7 +31,16 @@ interface AhuTong {
     suspend fun getCaptchaResult(@Part data: MultipartBody.Part): Captcha
 
     @GET("/api/check_apk_update")
-    suspend fun getApkUpdateInfo(): ApkUpdateInfo
+    suspend fun getApkUpdateInfo(@Query("subject") subject: String? = null): ApkUpdateInfo
+
+    @GET("/api/early-access")
+    suspend fun getEarlyAccess(@Query("subject") subject: String): EarlyAccessMembership
+
+    @POST("/api/early-access")
+    suspend fun joinEarlyAccess(@Body request: EarlyAccessRequest): EarlyAccessMembership
+
+    @HTTP(method = "DELETE", path = "/api/early-access", hasBody = true)
+    suspend fun leaveEarlyAccess(@Body request: EarlyAccessRequest): EarlyAccessMembership
 
     @GET("/api/gray/check")
     suspend fun getGrayFeatureDecision(
@@ -81,8 +93,7 @@ interface AhuTong {
 
         val API = createApi(okHttpClient)
         val GRAY_API = createApi(grayOkHttpClient)
+        val EARLY_ACCESS_API = createApi(grayOkHttpClient)
 
     }
 }
-
-

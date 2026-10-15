@@ -49,6 +49,14 @@ class MainViewModel @Inject constructor(
                     is ApkDownloadEvent.Progress -> apkProgress.value = event.fraction
                     ApkDownloadEvent.MirrorSuggested -> showApkMirrorPrompt.value = true
                     is ApkDownloadEvent.Succeeded -> {
+                        val update = selectedUpdate ?: return@collect
+                        val revision = updateChannelRevision
+                        val verified = withContext(Dispatchers.IO) {
+                            downloader.cachedApk(update.info.versionCode, update.sha256)
+                        }
+                        if (revision != updateChannelRevision || selectedUpdate !== update ||
+                            verified == null || verified.canonicalFile != event.apkFile.canonicalFile
+                        ) return@collect
                         apkDownloading.value = false
                         apkProgress.value = null
                         apkDownloadElapsedText.value = event.elapsedText
@@ -96,6 +104,27 @@ class MainViewModel @Inject constructor(
     private var installAfterApkDownload = false
     private var showDialogWhenApkDownloadCompletes = false
     private var selectedUpdate: UpdateCheck.Available? = null
+    @Volatile private var updateChannelRevision = 0L
+
+    /** Membership and account changes invalidate any update offered by the previous channel. */
+    fun onUpdateChannelChanged() {
+        updateChannelRevision++
+        downloader.cancel()
+        selectedUpdate = null
+        installAfterApkDownload = false
+        showDialogWhenApkDownloadCompletes = false
+        showApkUpdateDialog.value = false
+        apkUpdateInfo.value = null
+        apkDownloading.value = false
+        apkLocalReady.value = false
+        apkProgress.value = null
+        apkErrorText.value = null
+        apkDownloadElapsedText.value = null
+        downloadedApkFile.value = null
+        showApkMirrorPrompt.value = false
+        apkUsingMirrorSource.value = false
+        viewModelScope.launch { checkApkUpdate() }
+    }
 
     /**
      * 启动时检查云端更新、清理残留 APK、检测本地缓存
@@ -106,8 +135,10 @@ class MainViewModel @Inject constructor(
             Log.i("ApkUpdate", "startup update check disabled for debug build")
             return@withContext
         }
+        val revision = updateChannelRevision
         when (val check = updateChecker.check(BuildConfig.VERSION_CODE, UpdateCheckEntry.STARTUP)) {
             is UpdateCheck.Available -> withContext(Dispatchers.Main) {
+                if (revision != updateChannelRevision) return@withContext
                 selectedUpdate = check
                 apkUpdateInfo.value = check.info
                 apkErrorText.value = null
@@ -129,10 +160,12 @@ class MainViewModel @Inject constructor(
      */
     fun installLocalApk() {
         val update = selectedUpdate ?: return
+        val revision = updateChannelRevision
         viewModelScope.launch(Dispatchers.IO) {
             val localApk = downloader.cachedApk(update.info.versionCode, update.sha256)
             if (localApk == null) {
                 withContext(Dispatchers.Main) {
+                    if (revision != updateChannelRevision || selectedUpdate !== update) return@withContext
                     apkLocalReady.value = false
                     apkDownloadElapsedText.value = null
                     apkErrorText.value = "本地文件已丢失或损坏，请重新下载"
@@ -140,7 +173,9 @@ class MainViewModel @Inject constructor(
                 return@launch
             }
             withContext(Dispatchers.Main) {
-                downloadedApkFile.value = localApk
+                if (revision == updateChannelRevision && selectedUpdate === update) {
+                    downloadedApkFile.value = localApk
+                }
             }
         }
     }
@@ -233,6 +268,7 @@ class MainViewModel @Inject constructor(
         }
 
         apkUpdateChecking.value = true
+        val revision = updateChannelRevision
 
         viewModelScope.launch(Dispatchers.IO) {
             val resultText = try {
@@ -244,6 +280,7 @@ class MainViewModel @Inject constructor(
                 ) {
                     is UpdateCheck.Available -> {
                         withContext(Dispatchers.Main) {
+                            if (revision != updateChannelRevision) return@withContext
                             selectedUpdate = check
                             apkUpdateInfo.value = check.info
                             apkErrorText.value = null
@@ -267,7 +304,10 @@ class MainViewModel @Inject constructor(
                 "检查更新失败：${e.message ?: "请稍后重试"}"
             }
 
-            finishManualUpdateCheck(resultText, onResult)
+            finishManualUpdateCheck(
+                if (revision == updateChannelRevision) resultText else "更新渠道已变更，请重新检查",
+                onResult
+            )
         }
     }
     private suspend fun finishManualUpdateCheck(

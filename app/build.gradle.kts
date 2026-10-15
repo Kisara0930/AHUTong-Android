@@ -90,7 +90,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 304004
-        versionName = "3.4.0"
+        versionName = "3.4.2"
         buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
         buildConfigField("String", "BUGLY_APP_ID", "\"$buglyAppId\"")
         buildConfigField("String", "CANTEEN_WRITE_KEY", "\"$canteenWriteKey\"")
