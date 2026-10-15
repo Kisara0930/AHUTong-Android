@@ -14,7 +14,7 @@ Missing, malformed, duplicate query subjects and extra membership fields return 
 
 ## APK update channels
 
-`GET /api/check_apk_update` retains the existing stable update behavior and URL. Guests omit `subject`. Signed-in clients may add `?subject=<account hash>`: nonmembers still receive only stable updates; members receive the highest available `versionCode` across stable and preview, with stable winning equal versions. The response adds `channel`, either `stable` or `preview`, and otherwise keeps the existing fields, checksum and signature format. Only the selected APK is hashed and signed. Membership database failures fall back to stable updates.
+`GET /api/check_apk_update` retains the existing stable update behavior and URL. Guests omit `subject`. Signed-in clients may add `?subject=<account hash>`: nonmembers still receive only stable updates; members receive the highest available `versionCode` across stable and preview, with stable winning equal versions. The response adds `channel`, either `stable` or `preview`, and otherwise keeps the existing fields, checksum and signature format. Candidates are attempted in descending version order, preferring stable on ties. Only attempted candidates are hashed and signed. Membership database failures fall back to stable updates.
 
 Stable packages keep the existing `static/` paths. Preview packages use a separate directory:
 
@@ -33,7 +33,7 @@ static/
     apk_force.txt
 ```
 
-Both channels require an APK and integer `apk_version.txt`. The other metadata files remain optional with the existing defaults. Preview downloads use `/download/preview/ahutong.apk`; publishing preview files must not replace the stable files. A missing or invalid member-channel candidate is skipped, and no eligible package returns the original HTTP 404 `{"error": "Server files missing"}`. Leaving early access makes subsequent checks choose stable; it does not install an older APK or uninstall the current app.
+Both channels require an APK and integer `apk_version.txt`. The other metadata files remain optional with the existing defaults. Preview downloads use `/download/preview/ahutong.apk`; publishing preview files must not replace the stable files. A missing or invalid member-channel candidate is skipped. If building the selected candidate fails while reading metadata, hashing, or signing, the service tries the next eligible candidate; a broken preview therefore cannot block a usable stable update. Nonmembers never fall back to preview. No discovered package returns the original HTTP 404 `{"error": "Server files missing"}`; if all discovered candidates fail to build, the service retains HTTP 500. Leaving early access makes subsequent checks choose stable; it does not install an older APK or uninstall the current app.
 
 ## School calendars
 
@@ -50,6 +50,6 @@ Run the isolated server tests with the production virtual environment before dep
 python -m unittest -v test_app.py
 ```
 
-The tests use temporary package directories and a temporary SQLite database, and mock signing without reading a private key. They cover membership validation, idempotent join/leave, account isolation, channel selection, fallback behavior and existing update compatibility, as well as calendars.
+The tests use temporary package directories and a temporary SQLite database, and mock signing without reading a private key. They cover membership validation, idempotent join/leave, account isolation, channel selection, corrupt optional metadata, APK read/signing failures, fallback eligibility, all-candidate failures and existing update compatibility, as well as calendars.
 
 生产部署可设置 `AHUTONG_EARLY_ACCESS_DB_PATH` 指向站点目录之外的数据库文件；例如 `/var/lib/openahu-update/early_access.sqlite3`。目录需由服务运行账号可写，并限制其他账号读取。

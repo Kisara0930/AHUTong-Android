@@ -269,6 +269,122 @@ class EarlyAccessApiTest(unittest.TestCase):
                 expected_url = "preview/ahutong.apk" if expected_channel == "preview" else "ahutong.apk"
                 self.assertEqual(f"{update_app.HOST_URL}/download/{expected_url}", payload["url"])
 
+    def test_corrupt_preview_optional_metadata_falls_back_to_complete_stable_config(self):
+        self.membership("POST")
+        for filename in (
+            update_app.APK_VERSION_NAME_FILENAME,
+            update_app.APK_CHANGELOG_FILENAME,
+            update_app.APK_FORCE_FILENAME,
+        ):
+            with self.subTest(filename=filename):
+                stable_path = self.write_package("stable", 10)
+                self.write_package("preview", 20)
+                with open(os.path.join(self.static_dir, "preview", filename), "wb") as file:
+                    file.write(b"\xff\xfe")
+                self.sign_file.reset_mock()
+                with patch.object(update_app.app.logger, "warning"):
+                    response = self.check_update(self.subject)
+                self.assertEqual(200, response.status_code)
+                self.assertEqual({
+                    "versionCode": 10,
+                    "versionName": "stable-10",
+                    "force": False,
+                    "url": f"{update_app.HOST_URL}/download/ahutong.apk",
+                    "sha256": hashlib.sha256(b"stable").hexdigest(),
+                    "signature": "test-signature",
+                    "alg": "ed25519",
+                    "changelog": "stable changelog",
+                    "channel": "stable",
+                    "note": "Latest APK update",
+                }, response.get_json())
+                self.sign_file.assert_called_once_with(stable_path)
+
+    def test_unreadable_preview_apk_falls_back_to_stable(self):
+        stable_path = self.write_package("stable", 10)
+        preview_path = self.write_package("preview", 20)
+        self.membership("POST")
+        real_hash = update_app.sha256_hex_file
+
+        def read_hash(path):
+            if path == preview_path:
+                raise PermissionError("preview APK cannot be read")
+            return real_hash(path)
+
+        with patch.object(update_app, "sha256_hex_file", side_effect=read_hash), \
+                patch.object(update_app.app.logger, "warning"):
+            response = self.check_update(self.subject)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("stable", response.get_json()["channel"])
+        self.assertEqual(hashlib.sha256(b"stable").hexdigest(), response.get_json()["sha256"])
+        self.sign_file.assert_called_once_with(stable_path)
+
+    def test_preview_signing_failure_falls_back_to_stable(self):
+        stable_path = self.write_package("stable", 10)
+        preview_path = self.write_package("preview", 20)
+        self.membership("POST")
+        self.sign_file.side_effect = [RuntimeError("preview signing failed"), "stable-signature"]
+        with patch.object(update_app.app.logger, "warning"):
+            response = self.check_update(self.subject)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("stable", response.get_json()["channel"])
+        self.assertEqual("stable-signature", response.get_json()["signature"])
+        self.assertEqual(
+            [preview_path, stable_path],
+            [args.args[0] for args in self.sign_file.call_args_list],
+        )
+
+    def test_all_candidate_build_failures_keep_internal_server_error(self):
+        stable_path = self.write_package("stable", 10)
+        preview_path = self.write_package("preview", 20)
+        self.membership("POST")
+        self.sign_file.side_effect = RuntimeError("signing unavailable")
+        with patch.object(update_app.app.logger, "warning"):
+            response = self.check_update(self.subject)
+        self.assertEqual(500, response.status_code)
+        self.assertIn("Failed to build apk update config", response.get_json()["error"])
+        self.assertEqual(
+            [preview_path, stable_path],
+            [args.args[0] for args in self.sign_file.call_args_list],
+        )
+
+    def test_nonmember_never_receives_preview_when_stable_metadata_is_broken(self):
+        self.write_package("stable", 10)
+        self.write_package("preview", 20)
+        with open(os.path.join(self.static_dir, update_app.APK_CHANGELOG_FILENAME), "wb") as file:
+            file.write(b"\xff\xfe")
+        for subject in (None, self.subject):
+            with self.subTest(subject=subject):
+                self.assertEqual(500, self.check_update(subject).status_code)
+        self.sign_file.assert_not_called()
+
+    def test_healthy_newer_stable_does_not_read_broken_lower_preview_metadata(self):
+        stable_path = self.write_package("stable", 30)
+        self.write_package("preview", 20)
+        self.membership("POST")
+        with open(os.path.join(self.static_dir, "preview", update_app.APK_CHANGELOG_FILENAME), "wb") as file:
+            file.write(b"\xff\xfe")
+        response = self.check_update(self.subject)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("stable", response.get_json()["channel"])
+        self.assertEqual(30, response.get_json()["versionCode"])
+        self.sign_file.assert_called_once_with(stable_path)
+
+    def test_member_can_use_preview_when_newer_stable_cannot_be_built(self):
+        stable_path = self.write_package("stable", 30)
+        preview_path = self.write_package("preview", 20)
+        self.membership("POST")
+        self.sign_file.side_effect = [RuntimeError("stable signing failed"), "preview-signature"]
+        with patch.object(update_app.app.logger, "warning"):
+            response = self.check_update(self.subject)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("preview", response.get_json()["channel"])
+        self.assertEqual(20, response.get_json()["versionCode"])
+        self.assertEqual("preview-signature", response.get_json()["signature"])
+        self.assertEqual(
+            [stable_path, preview_path],
+            [args.args[0] for args in self.sign_file.call_args_list],
+        )
+
     def test_leaving_restores_stable_update_channel(self):
         self.write_package("stable", 10)
         self.write_package("preview", 20)

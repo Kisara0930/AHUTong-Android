@@ -16,14 +16,24 @@ class ScheduleCourseGroupsTest {
     }
 
     @Test
+    fun `overview retains courses when one time range contains another`() {
+        val shorter = course("数学", start = 1, length = 2)
+        val longer = course("英语", start = 1, length = 3)
+        val courses = listOf(shorter, longer)
+        assertEquals(listOf(courses), overlappingCourseGroups(courses))
+        assertEquals(listOf(courses), weeklyCourseGroups(courses, 1))
+        assertTrue(hasCourseConflict(courses))
+    }
+
+    @Test
     fun `partial and transitive overlaps form one group regardless of input order`() {
         val first = course("数学", start = 1, length = 2)
         val second = course("英语", start = 2, length = 2)
         val third = course("物理", start = 3, length = 2)
-        assertEquals(
-            listOf(listOf(first, second, third)),
-            weeklyCourseGroups(listOf(third, first, second), 1)
-        )
+        val courses = listOf(third, first, second)
+        val expected = listOf(listOf(first, second, third))
+        assertEquals(expected, overlappingCourseGroups(courses))
+        assertEquals(expected, weeklyCourseGroups(courses, 1))
     }
 
     @Test
@@ -31,11 +41,11 @@ class ScheduleCourseGroupsTest {
         val first = course("数学")
         val adjacent = course("英语", start = 3)
         val nextDay = course("物理", day = 2)
-        assertEquals(
-            listOf(listOf(first), listOf(adjacent), listOf(nextDay)),
-            weeklyCourseGroups(listOf(first, adjacent, nextDay), 1)
-        )
-        assertFalse(hasCourseConflict(listOf(first, adjacent, nextDay)))
+        val courses = listOf(first, adjacent, nextDay)
+        val expected = listOf(listOf(first), listOf(adjacent), listOf(nextDay))
+        assertEquals(expected, overlappingCourseGroups(courses))
+        assertEquals(expected, weeklyCourseGroups(courses, 1))
+        assertFalse(hasCourseConflict(courses))
     }
 
     @Test
@@ -48,6 +58,26 @@ class ScheduleCourseGroupsTest {
         assertEquals(emptyList(), weeklyCourseGroups(courses, 5))
         assertFalse(hasCourseConflict(courses))
         assertTrue(hasCourseConflict(courses + course("物理", weeks = listOf(3))))
+    }
+
+    @Test
+    fun `overview groups overlapping odd and even week courses without a conflict`() {
+        val oddWeeks = course("数学", start = 1, length = 2, weeks = listOf(1, 3))
+        val evenWeeks = course("英语", start = 1, length = 3, weeks = listOf(2, 4))
+        val courses = listOf(oddWeeks, evenWeeks)
+        assertEquals(listOf(courses), overlappingCourseGroups(courses))
+        assertEquals(listOf(listOf(oddWeeks)), weeklyCourseGroups(courses, 1))
+        assertEquals(listOf(listOf(evenWeeks)), weeklyCourseGroups(courses, 2))
+        assertFalse(hasCourseConflict(courses))
+    }
+
+    @Test
+    fun `overview detects a shared teaching week in partially overlapping ranges`() {
+        val first = course("数学", start = 1, length = 2, weeks = listOf(1, 3))
+        val second = course("英语", start = 2, length = 2, weeks = listOf(3, 5))
+        val courses = listOf(first, second)
+        assertEquals(listOf(courses), overlappingCourseGroups(courses))
+        assertTrue(hasCourseConflict(courses))
     }
 
     private fun course(

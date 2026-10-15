@@ -135,6 +135,7 @@ import com.ahu.ahutong.ui.screen.main.schedule.schedulePeriodDescription
 import com.ahu.ahutong.ui.screen.main.schedule.shortScheduleLocation
 import com.ahu.ahutong.ui.screen.main.schedule.weekRangeText
 import com.ahu.ahutong.ui.screen.main.schedule.weeklyCourseGroups
+import com.ahu.ahutong.ui.screen.main.schedule.overlappingCourseGroups
 import com.ahu.ahutong.ui.screen.main.schedule.hasCourseConflict
 import com.ahu.ahutong.ui.shape.SmoothRoundedCornerShape
 import com.ahu.ahutong.ui.state.ScheduleViewModel
@@ -407,10 +408,7 @@ fun Schedule(
         }
     }
     val overviewCourseGroups = remember(schedule) {
-        schedule
-            .groupBy { Triple(it.weekday, it.startTime, it.length) }
-            .values
-            .toList()
+        overlappingCourseGroups(schedule)
     }
     val previewStart = remember(selectedSemester?.startDate) {
         selectedSemester?.startDate?.let {

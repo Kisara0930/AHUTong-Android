@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import com.ahu.ahutong.data.model.AppUiTheme
 import com.ahu.ahutong.BuildConfig
+import com.ahu.ahutong.restartMainAfterLogin
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -411,24 +412,7 @@ fun Main(
                         }
                     },
                     onLoggedIn = {
-                        scheduleViewModel.clear()
-                        scope.launch {
-                            navController.navigate("home") {
-                                popUpTo(navController.graph.id) { inclusive = true }
-                            }
-                            com.ahu.ahutong.data.session.SessionStore.currentUser()?.xh?.takeIf { it.isNotBlank() }?.let {
-                                behaviorRuntime.startProfile(it)
-                            }
-                            homeEditGrayState = GrayReleaseManager.state(
-                                GrayFeatures.HomeEdit,
-                                context
-                            )
-                        }
-                        discoveryViewModel.loadActivityBean()
-                        if (AHUCache.canUseUndergraduateAcademics()) {
-                            scheduleViewModel.loadConfig()
-                            scheduleViewModel.refreshSchedule()
-                        }
+                        activity?.restartMainAfterLogin()
                     }
                 )
             }

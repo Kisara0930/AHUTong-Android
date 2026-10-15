@@ -229,6 +229,35 @@ def apk_candidate(channel: str):
     }
 
 
+def apk_update_config(candidate):
+    channel = candidate["channel"]
+    directory = candidate["directory"]
+    version_code = candidate["version_code"]
+    apk_path = candidate["apk_path"]
+    version_name = read_text_file(
+        os.path.join(directory, APK_VERSION_NAME_FILENAME), default=str(version_code)
+    )
+    changelog = read_text_file(
+        os.path.join(directory, APK_CHANGELOG_FILENAME), default="New version available."
+    )
+    force = read_bool_file(os.path.join(directory, APK_FORCE_FILENAME), default=False)
+    sha256_hex = sha256_hex_file(apk_path)
+    signature = sign_file_sha256_digest(apk_path)
+    return {
+        "versionCode": version_code,
+        "versionName": version_name,
+        "force": force,
+        "url": f"{HOST_URL}/download/"
+               f"{'preview/' if channel == 'preview' else ''}{APK_FILENAME}",
+        "sha256": sha256_hex,
+        "signature": signature,
+        "alg": "ed25519",
+        "changelog": changelog,
+        "channel": channel,
+        "note": "Latest APK update",
+    }
+
+
 def parse_calendar_year(value: str):
     match = CALENDAR_YEAR_PATTERN.fullmatch(value)
     if not match:
@@ -323,45 +352,24 @@ def check_update_apk():
         if not candidates:
             return jsonify({"error": "Server files missing"}), 404
 
-        selected = max(
+        ordered = sorted(
             candidates,
             key=lambda candidate: (candidate["version_code"], candidate["channel"] == "stable"),
+            reverse=True,
         )
-        channel = selected["channel"]
-        version_code = selected["version_code"]
-        apk_path = selected["apk_path"]
-        directory = selected["directory"]
-        version_name_path = os.path.join(directory, APK_VERSION_NAME_FILENAME)
-        changelog_path = os.path.join(directory, APK_CHANGELOG_FILENAME)
-        force_path = os.path.join(directory, APK_FORCE_FILENAME)
-
-        version_name = read_text_file(version_name_path, default=str(version_code))
-        changelog = read_text_file(changelog_path, default="New version available.")
-        force = read_bool_file(force_path, default=False)
-
-        sha256_hex = sha256_hex_file(apk_path)
-        signature = sign_file_sha256_digest(apk_path)
+        for index, candidate in enumerate(ordered):
+            try:
+                return jsonify(apk_update_config(candidate))
+            except Exception:
+                if index == len(ordered) - 1:
+                    raise
+                # A selected candidate can fail after discovery, including while hashing or signing.
+                app.logger.warning(
+                    "Unable to build %s APK update config; trying another channel",
+                    candidate["channel"], exc_info=True,
+                )
     except Exception as e:
         return jsonify({"error": f"Failed to build apk update config: {e}"}), 500
-
-    return jsonify({
-        # 你 Kotlin/Rust 侧可以直接用 versionCode 做比较
-        "versionCode": version_code,
-        "versionName": version_name,
-
-        # 可选：强更开关（你也可以后续加 minSupportedCode）
-        "force": force,
-
-        "url": f"{HOST_URL}/download/"
-               f"{'preview/' if channel == 'preview' else ''}{APK_FILENAME}",
-        "sha256": sha256_hex,
-        "signature": signature,
-        "alg": "ed25519",
-
-        "changelog": changelog,
-        "channel": channel,
-        "note": "Latest APK update"
-    })
 
 
 # -------------------------
