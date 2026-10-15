@@ -256,14 +256,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun init() {
+        if (AHUCache.isPrivacyAccepted() && SessionStore.isLoggedIn()) {
+            discoveryViewModel.preparePaymentQr()
+        }
         lifecycleScope.launchSafe {
             // Let Compose draw the cached first screen before starting native services,
             // widget scheduling and network refreshes.
             delay(STARTUP_BACKGROUND_WORK_DELAY_MS)
-            if (AHUCache.isPrivacyAccepted()) {
-                SessionStore.currentUser()?.xh?.takeIf { it.isNotBlank() }?.let { behaviorRuntime.startProfile(it) }
-            }
-
             val storageInitialized = withContext(Dispatchers.IO) {
                 WidgetUpdateScheduler.scheduleNext(this@MainActivity)
                 RustSDK.loadLibrary(context = applicationContext)
@@ -271,6 +270,11 @@ class MainActivity : ComponentActivity() {
             }
             if (!storageInitialized) {
                 restoreRustCookies()
+            }
+
+            discoveryViewModel.awaitPaymentQrPreparation()
+            if (AHUCache.isPrivacyAccepted()) {
+                SessionStore.currentUser()?.xh?.takeIf { it.isNotBlank() }?.let { behaviorRuntime.startProfile(it) }
             }
 
             if (SessionStore.isLoggedIn() || AHUCache.getMockData()) {
