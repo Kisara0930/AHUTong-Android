@@ -78,7 +78,7 @@ android {
         applicationId = "com.ahu.ahutong"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3004003
+        versionCode = 304003
         versionName = "3.4.2"
         buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
         buildConfigField("String", "BUGLY_APP_ID", "\"$buglyAppId\"")
