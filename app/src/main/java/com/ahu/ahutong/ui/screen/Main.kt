@@ -192,6 +192,7 @@ fun Main(
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
     val sessionStatus by AhuSessionState.status.collectAsState()
+    val paymentQrVisible by paymentQrCommands.visible.collectAsState()
     val earlyAccessState by EarlyAccessManager.state.collectAsState()
     LaunchedEffect(earlyAccessState.subject, earlyAccessState.joined) {
         mainViewModel.onUpdateChannelChanged()
@@ -761,7 +762,7 @@ fun Main(
             paymentQrCommands = paymentQrCommands,
             viewModel = electricityAlertViewModel
         )
-        if (isReLoginShown && currentRoute != "login") {
+        if (isReLoginShown && currentRoute != "login" && !paymentQrVisible) {
             AppDialogSurface(
                 onDismissRequest = { onReLoginDismiss() },
                 properties = DialogProperties(

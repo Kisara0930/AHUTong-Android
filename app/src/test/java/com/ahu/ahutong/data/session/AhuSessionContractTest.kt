@@ -374,6 +374,29 @@ class SessionExpiryHookContractTest {
     }
 
     @Test
+    fun `wisdom 401 renews its own generation after an unrelated academic refresh`() = runBlocking {
+        SessionRefreshCoordinator.refreshIfNeeded(SessionRefreshCoordinator.currentGeneration()) {
+            SessionRefreshCoordinator.RefreshOutcome.SUCCESS
+        }
+        val login = FakeSessionSignIn(AhuResult.Success(LoginOutcome.Success(User("student", "20210001"))))
+        val session = RepositoryAhuSession(
+            login, FakeCredentialVault("stored-secret"), FakeSessionAccount(User("student", "20210001")),
+            FakeSessionResidue(), refreshScope = SessionRefreshCoordinator.Scope.WISDOM
+        )
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setResponseCode(401))
+            server.enqueue(MockResponse().setBody("""{"code":10000,"msg":"ok","object":"qr"}"""))
+            server.start()
+            val client = AhuHttp.plain().campusAutoLogin(SessionRefreshCoordinator.Scope.WISDOM)
+                .campusSessionRefresh(RepositorySessionExpiryHook(session, SessionRefreshCoordinator.Scope.WISDOM))
+                .build()
+            assertEquals("qr", createAdwmhApi(client, server.url("/").toString()).getQrcode().`object`)
+            assertEquals(2, server.requestCount)
+        }
+        assertEquals(1, login.calls.size)
+    }
+
+    @Test
     fun `an old response cannot expire a newly authenticated session`() = runBlocking {
         val hook = RepositorySessionExpiryHook(FakeAhuSession())
         AhuSessionState.markAuthenticated()

@@ -793,7 +793,7 @@ object AHURepository {
                         // API-level rejection may arrive as HTTP 200 and bypass the
                         // redirect authenticator. Try Wisdom recovery once per display.
                         wisdomRefreshAttempted = true
-                        if (DefaultWisdomSession.ensureFresh(SessionRefreshCoordinator.currentGeneration())) {
+                        if (DefaultWisdomSession.ensureFresh(SessionRefreshCoordinator.currentGeneration(SessionRefreshCoordinator.Scope.WISDOM))) {
                             response = AdwmhApi.QR_API.getQrcode()
                         }
                     }

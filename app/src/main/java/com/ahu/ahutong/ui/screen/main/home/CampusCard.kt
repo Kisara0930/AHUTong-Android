@@ -106,7 +106,6 @@ fun CampusCard(
         ).behaviorPredictionRuntime()
     }
     val pref by preferencesManager.showQRCode.collectAsState(initial = false)
-    val behaviorDiagnostics by behaviorRuntime.diagnostics.collectAsState()
 
     var isQrcode by remember { mutableStateOf(false) }
     val paymentQrCommand by paymentQrCommands.command.collectAsState()
@@ -121,25 +120,14 @@ fun CampusCard(
         isPaymentQrVisible = isQrcode
     )
 
-    LaunchedEffect(pref) {
-        if (!pref) isQrcode = false
-    }
-
-    LaunchedEffect(pref, behaviorDiagnostics.profileActive) {
-        if (pref && behaviorDiagnostics.profileActive) {
-            isQrcode = behaviorRuntime.authorizeUserPreferencePaymentQr()
-        }
+    LaunchedEffect(pref, enabled) {
+        // This is an explicit display preference, independent of prediction startup.
+        isQrcode = pref && enabled && SessionStore.isLoggedIn()
     }
 
     LaunchedEffect(paymentQrCommand?.commandId) {
         val command = paymentQrCommand ?: return@LaunchedEffect
         if (paymentQrCommands.consume(command.commandId) != null) isQrcode = true
-    }
-
-    LaunchedEffect(isQrcode) {
-        if (SessionStore.isLoggedIn() && isQrcode) {
-            onRefreshBalance()
-        }
     }
 
 
@@ -318,6 +306,7 @@ private fun QRcodeView(balance: Double, onBack: () -> Unit) {
     val discoveryViewModel: DiscoveryViewModel = hiltViewModel()
     val qrcodeBitmap by discoveryViewModel.qrcode.collectAsState()
     val finished by discoveryViewModel.state.collectAsState()
+    val qrStatusText by discoveryViewModel.qrStatusText.collectAsState()
 
     var showFullScreen by remember {
         mutableStateOf(false)
@@ -338,7 +327,6 @@ private fun QRcodeView(balance: Double, onBack: () -> Unit) {
             ActionSource.ORGANIC
         )
         discoveryViewModel.loadQrCode(forceRefresh = true)
-        discoveryViewModel.refreshCardBalance()
     }
 
     DisposableEffect(activity) {
@@ -448,7 +436,7 @@ private fun QRcodeView(balance: Double, onBack: () -> Unit) {
                 ),
             contentAlignment = Alignment.Center
         ) {
-            if (finished) {
+            if (qrcodeBitmap != null || finished) {
                 qrcodeBitmap?.let {
                     Image(
                         bitmap = it.asImageBitmap(),
@@ -468,6 +456,11 @@ private fun QRcodeView(balance: Double, onBack: () -> Unit) {
             }
         }
 
+        Text(
+            text = qrStatusText,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 8.dp)
+        )
         Text(
             text = "¥ ${formatCampusCardBalance(balance)}",
             style = MaterialTheme.typography.titleLarge,
