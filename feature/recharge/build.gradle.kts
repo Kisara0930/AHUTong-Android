@@ -72,7 +72,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.foundation)
     implementation(libs.material3)
-    implementation(libs.androidx.material.icons.extended)
+    implementation(project(":core:icons"))
 
     // 设计系统的组件把它们写在签名里。
     implementation(libs.kyant0.backdrop)

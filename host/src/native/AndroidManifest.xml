@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='utf-8'?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" android:protectionLevel="signature" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
+    <queries>
+        <package android:name="com.chaoxing.mobile" />
+        <package android:name="com.eg.android.AlipayGphone" />
+        <package android:name="com.taobao.taobao" />
+        <intent><action android:name="android.intent.action.VIEW" /><data android:mimeType="application/pdf" /></intent>
+    </queries>
+    <!-- Downloaded component names below are checked against actual signed DEX by the delivery audit. -->
+    <application android:name="com.ahu.ahutong.bootstrap.NativeApplication" android:allowBackup="false" android:label="安大通" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:theme="@style/Theme.AHUTong.Host" android:supportsRtl="true" android:networkSecurityConfig="@xml/network_security_config" android:enableOnBackInvokedCallback="true" android:appComponentFactory="com.ahu.ahutong.bootstrap.NativeComponentFactory">
+        <activity android:name="com.ahu.ahutong.PluginActivity" android:exported="false" android:screenOrientation="portrait" android:launchMode="singleTop" />
+        <activity-alias android:name="com.ahu.ahutong.MainActivity" android:targetActivity="com.ahu.ahutong.PluginActivity" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity android:name="com.ahu.ahutong.platform.PluginIsolatedWebActivity" android:exported="false" android:process=":student_mail" />
+        <provider android:name="com.ahu.ahutong.platform.PluginMailSessionProvider" android:authorities="${applicationId}.student_mail_session" android:exported="false" />
+        <provider android:name="com.ahu.ahutong.platform.PluginStateProvider" android:authorities="${applicationId}.plugin_state" android:exported="false" />
+        <provider android:name="com.ahu.ahutong.platform.PluginGraduateNoticeProvider" android:authorities="${applicationId}.postgraduate_notices" android:exported="false" android:process=":postgraduate_notices" />
+        <provider android:name="androidx.core.content.FileProvider" tools:ignore="MissingClass" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+        </provider>
+        <receiver android:name="com.ahu.ahutong.platform.PluginReminderReceiver" tools:ignore="MissingClass" android:exported="false" />
+        <receiver android:name="com.ahu.ahutong.platform.PluginReminderRestoreReceiver" tools:ignore="MissingClass" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.ahu.ahutong.appwidget.ScheduleAdaptiveWidgetProvider" android:exported="false" android:label="课表">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/adaptive_test_widget_info" />
+        </receiver>
+        <receiver android:name="com.ahu.ahutong.appwidget.ScheduleAppWidgetReceiver" android:exported="false" android:label="课表">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/adaptive_test_widget_info" />
+        </receiver>
+    <activity android:name="com.ahu.ahutong.bootstrap.RestartActivity" android:exported="false" android:process=":bootstrap_restart" android:excludeFromRecents="true" android:taskAffinity="${applicationId}.bootstrap_restart" /><service android:name="androidx.camera.core.impl.MetadataHolderService" tools:ignore="MissingClass" android:enabled="false" android:exported="false">
+            <meta-data android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER" android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+        </service>
+
+        <provider android:name="androidx.startup.InitializationProvider" tools:ignore="MissingClass" android:authorities="${applicationId}.androidx-startup" android:exported="false">
+            <meta-data android:name="androidx.work.WorkManagerInitializer" android:value="androidx.startup" />
+            <meta-data android:name="androidx.emoji2.text.EmojiCompatInitializer" android:value="androidx.startup" />
+            <meta-data android:name="androidx.lifecycle.ProcessLifecycleInitializer" android:value="androidx.startup" />
+            <meta-data android:name="okhttp3.internal.platform.PlatformInitializer" android:value="androidx.startup" />
+            <meta-data android:name="androidx.profileinstaller.ProfileInstallerInitializer" android:value="androidx.startup" />
+        </provider>
+
+        <service android:name="androidx.work.impl.background.systemjob.SystemJobService" tools:ignore="MissingClass" android:directBootAware="false" android:enabled="@bool/enable_system_job_service_default" android:exported="true" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name="androidx.work.impl.foreground.SystemForegroundService" tools:ignore="MissingClass" android:directBootAware="false" android:enabled="@bool/enable_system_foreground_service_default" android:exported="false" />
+
+        <receiver android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver" tools:ignore="MissingClass" android:directBootAware="false" android:enabled="true" android:exported="false" />
+        <receiver android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver" tools:ignore="MissingClass" android:directBootAware="false" android:enabled="false" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver" tools:ignore="MissingClass" android:directBootAware="false" android:enabled="true" android:exported="true" android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS" />
+            </intent-filter>
+        </receiver>
+
+        <uses-library android:name="androidx.window.extensions" android:required="false" />
+        <uses-library android:name="androidx.window.sidecar" android:required="false" />
+
+        <service android:name="androidx.room.MultiInstanceInvalidationService" tools:ignore="MissingClass" android:directBootAware="true" android:exported="false" />
+
+        <receiver android:name="androidx.profileinstaller.ProfileInstallReceiver" tools:ignore="MissingClass" android:directBootAware="false" android:enabled="true" android:exported="true" android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

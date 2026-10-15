@@ -53,7 +53,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.foundation)
     implementation(libs.material3)
-    implementation(libs.androidx.material.icons.extended)
+    implementation(project(":core:icons"))
     // 贡献名单用 AsyncImage 显示头像。
     implementation(libs.coil.compose)
     // 设计系统的 SettingsBackdropContainer 在签名里用到 Backdrop，调用方必须看得见它。

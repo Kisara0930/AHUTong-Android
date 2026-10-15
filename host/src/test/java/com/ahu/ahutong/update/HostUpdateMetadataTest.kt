@@ -12,8 +12,8 @@ class HostUpdateMetadataTest {
     private fun metadata() = JsonObject().apply {
         addProperty("schemaVersion", 1); addProperty("product", "ahutong-plugin-host")
         addProperty("packageName", "com.ahu.ahutong"); addProperty("versionCode", 304003)
-        addProperty("versionName", "3.4.2"); addProperty("hostApiVersion", 1)
-        addProperty("runtimeVersion", "1"); addProperty("minSdk", 26)
+        addProperty("versionName", "3.4.2"); addProperty("hostApiVersion", 2)
+        addProperty("runtimeVersion", "2"); addProperty("minSdk", 26)
         addProperty("sha256", "a".repeat(64)); addProperty("size", 100)
         addProperty("url", "/v1/host/packages/304003/test.apk"); addProperty("releaseNotes", "修复")
         add("requiredPluginVersions", JsonObject().apply { addProperty("account", 1) })
@@ -41,9 +41,18 @@ class HostUpdateMetadataTest {
         assertFailsWith<IllegalArgumentException> { HostUpdateVerifier.parse(envelope(metadata()).toString(), wrong.public, 304002, 36) }
     }
     @Test fun downgradeLegacyProductAndIncompatibleRuntimeAreRejected() {
-        listOf("versionCode" to "304002", "product" to "legacy", "runtimeVersion" to "2", "minSdk" to "37").forEach { (field, value) ->
+        listOf("versionCode" to "304002", "product" to "legacy", "runtimeVersion" to "3", "minSdk" to "37").forEach { (field, value) ->
             assertFailsWith<IllegalArgumentException> { parse(envelope(metadata().apply { addProperty(field, value) })) }
         }
+    }
+    @Test fun nativeMarketBootstrapRequiresAllFoundationIds() {
+        val value = metadata().apply { addProperty("bootstrapMode", "market") }
+        assertFailsWith<IllegalArgumentException> { parse(envelope(value)) }
+        value.add("requiredPluginVersions", JsonObject().apply {
+            addProperty("shared_runtime", 1); addProperty("ui_runtime", 1)
+            addProperty("account", 4); addProperty("appearance", 3)
+        })
+        assertEquals("market", parse(envelope(value))?.bootstrapMode)
     }
     @Test fun downloadCannotEscapeOrigin() {
         val base = URI("https://market.example/root/")

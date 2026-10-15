@@ -15,6 +15,15 @@ import audit_plugin_bundle as audit
 
 
 class ArtifactAuditTests(unittest.TestCase):
+    def test_only_empty_r8_framework_factory_stubs_are_classified_as_platform_placeholders(self):
+        name = "Landroid/app/AppComponentFactory;"
+        stub = {"parents":["Ljava/lang/Object;"],"methods":{"<clinit>()V"},"fields":set()}
+        self.assertTrue(audit.framework_factory_stub(name, stub, {name:{}}))
+        self.assertFalse(audit.framework_factory_stub("Landroidx/RealRuntime;", stub, {name:{}}))
+        self.assertFalse(audit.framework_factory_stub(name, dict(stub, methods={"<clinit>()V","instantiateActivity()V"}), {name:{}}))
+        self.assertFalse(audit.framework_factory_stub(name, dict(stub, fields={"runtime:Ljava/lang/Object;"}), {name:{}}))
+        self.assertFalse(audit.framework_factory_stub(name, stub, {}))
+
     def test_aapt_resource_names_remain_case_sensitive_inside_apk(self):
         stream = io.BytesIO()
         with zipfile.ZipFile(stream, "w") as archive:

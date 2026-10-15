@@ -49,7 +49,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
       - name: Install SDK components
-        run: sdkmanager --install "platforms;android-36" "build-tools;37.0.0" "ndk;28.2.13676358"
+        run: sdkmanager --install "platforms;android-36" "build-tools;37.0.0" "ndk;28.2.13676358" "cmake;3.22.1"
       - name: Configure NDK and wrapper
         run: |
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
@@ -90,6 +90,15 @@ jobs:
         run: python3 scripts/ci_plugin_build.py host
       - name: Verify and collect CI-only APKs and plugins
         run: python3 scripts/ci_plugin_build.py collect
+      - name: Audit every delivered component and the minimal host
+        run: >-
+          python3 scripts/audit_plugin_delivery.py
+          --host artifacts/ci/ahutong-host-release-ci-only.apk
+          --plugins artifacts/ci
+          --certificate artifacts/ci/ci-trusted-certificate.der
+          --source-root .
+          --android-jar "$ANDROID_HOME/platforms/android-36/android.jar"
+          --report artifacts/ci/plugin-delivery-audit.json
       - name: Verify no local signing material is tracked
         run: |
           python3 - <<'PY'
@@ -111,6 +120,8 @@ jobs:
             core/*/build/reports/
             data/*/build/reports/
             plugins/*/build/reports/
+            runtime/*/build/reports/
+            bootstrap-kernel/build/reports/
             native/build/logs/
           if-no-files-found: warn
       - name: Upload CI-only host APKs and all plugins

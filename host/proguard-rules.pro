@@ -1,38 +1,6 @@
-# The shared SDK is called by signed packages that are compiled separately.
 -keepattributes Signature,InnerClasses,EnclosingMethod,*Annotation*,Exceptions
--keep class com.ahu.ahutong.** { *; }
--keep class org.commonmark.** { *; }
--keep class io.noties.markwon.** { *; }
--keep class com.ahu.ahutong.core.** { *; }
--keep class com.ahu.ahutong.ui.components.** { *; }
--keep class com.ahu.ahutong.ui.theme.** { *; }
--keep class com.ahu.ahutong.ui.shape.** { *; }
--keep class com.ahu.ahutong.ui.markdown.** { *; }
--keep class com.ahu.ahutong.data.model.** { *; }
--keep class com.ahu.ahutong.data.session.** { *; }
--keep class com.ahu.ahutong.data.security.** { *; }
--keep class com.ahu.ahutong.data.network.** { *; }
--keep class com.ahu.ahutong.data.debug.** { *; }
--keep class com.ahu.ahutong.data.schedule.** { *; }
--keep class com.ahu.ahutong.data.grade.** { *; }
--keep class com.ahu.ahutong.personalization.** { *; }
--keep class com.ahu.ahutong.ext.** { *; }
--keep class com.ahu.ahutong.utils.** { *; }
--keep class androidx.** { *; }
--keep class kotlin.** { *; }
--keep class kotlinx.** { *; }
--keep class okhttp3.** { *; }
--keep class okio.** { *; }
--keep class retrofit2.** { *; }
--keep class com.google.gson.** { *; }
--keep class org.jsoup.** { *; }
--keep class coil.** { *; }
--keep class com.franmontiel.** { *; }
--keep class com.tencent.mmkv.** { *; }
--keep class com.kyant.** { *; }
--keep class com.kyant0.** { *; }
--keep class top.yukonga.** { *; }
--keep class javax.inject.** { *; }
--keep class com.ahu.ahutong.**.R$* { *; }
--dontwarn java.lang.instrument.**
--dontwarn sun.misc.**
+# Only the tiny Java/Android ABI is retained for separately signed components.
+-keep class com.ahu.ahutong.hostapi.** { public protected *; }
+-keep class com.ahu.ahutong.bootstrap.NativeBootstrap { public static *; }
+# Isolate private APK names from independently minified shared-runtime class names.
+-repackageclasses com.ahu.ahutong.bootstrap.internal

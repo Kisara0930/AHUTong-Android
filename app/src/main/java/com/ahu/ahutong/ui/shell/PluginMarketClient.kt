@@ -38,7 +38,7 @@ internal class PluginMarketClient(endpoint: String) {
     fun cancel() = http.dispatcher.cancelAll()
 
     suspend fun catalog(): List<MarketPlugin> = withContext(Dispatchers.IO) {
-        val query = "hostApiVersion=1&runtimeVersion=1&sdk=${Build.VERSION.SDK_INT}&abis=${Build.SUPPORTED_ABIS.joinToString(",")}"
+        val query = "hostApiVersion=2&runtimeVersion=2&sdk=${Build.VERSION.SDK_INT}&abis=${Build.SUPPORTED_ABIS.joinToString(",")}"
         request("v1/plugins?$query").getAsJsonArray("plugins").map { parsePlugin(it.asJsonObject) }
     }
 
@@ -46,7 +46,7 @@ internal class PluginMarketClient(endpoint: String) {
         val installed = AhupInstaller.installedIds(context).associateWith {
             requireNotNull(AhupInstaller.manifestOf(context, it)).versionCode
         }
-        val body = gson.toJson(mapOf("hostApiVersion" to 1, "runtimeVersion" to "1",
+        val body = gson.toJson(mapOf("hostApiVersion" to 2, "runtimeVersion" to "2",
             "sdk" to Build.VERSION.SDK_INT, "abis" to Build.SUPPORTED_ABIS.toList(),
             "requested" to requested.toList(), "installed" to installed))
         val response = request("v1/resolve", body)

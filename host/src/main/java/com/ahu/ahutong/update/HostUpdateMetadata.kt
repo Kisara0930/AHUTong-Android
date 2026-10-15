@@ -9,7 +9,7 @@ import java.util.Base64
 internal data class HostUpdateMetadata(
     val versionCode: Long, val versionName: String, val minSdk: Int,
     val sha256: String, val size: Long, val url: String, val releaseNotes: String,
-    val requiredPlugins: Map<String, Long>
+    val requiredPlugins: Map<String, Long>, val bootstrapMode: String = "embedded"
 )
 
 /** Only fields inside the verified byte sequence can authorize an APK download. */
@@ -31,7 +31,7 @@ internal object HostUpdateVerifier {
         require(value.get("schemaVersion").asInt == 1 &&
             value.get("product").asString == "ahutong-plugin-host" &&
             value.get("packageName").asString == "com.ahu.ahutong") { "更新包不是安大通插件宿主" }
-        require(value.get("hostApiVersion").asInt == 1 && value.get("runtimeVersion").asString == "1") {
+        require(value.get("hostApiVersion").asInt == 2 && value.get("runtimeVersion").asString == "2") {
             "该更新需要另一套插件运行环境，请使用完整迁移安装包"
         }
         val version = value.get("versionCode").asLong
@@ -46,8 +46,11 @@ internal object HostUpdateVerifier {
             id to v.asLong
         }
         require(required["account"] != null && required.size <= 128) { "更新缺少账户插件" }
+        val mode = value.get("bootstrapMode")?.asString ?: "embedded"
+        require(mode in setOf("embedded", "market")) { "更新初始化模式未知" }
+        if (mode == "market") require(required.keys.containsAll(setOf("shared_runtime", "ui_runtime", "account", "appearance"))) { "更新缺少基础运行时" }
         return HostUpdateMetadata(version, value.get("versionName").asString, minSdk, hash, size,
-            value.get("url").asString, value.get("releaseNotes")?.asString.orEmpty(), required)
+            value.get("url").asString, value.get("releaseNotes")?.asString.orEmpty(), required, mode)
     }
 
     fun sameOrigin(base: URI, path: String): URI = base.resolve(path).also {

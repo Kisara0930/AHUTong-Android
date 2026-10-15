@@ -16,8 +16,8 @@ android {
         applicationId = "com.ahu.ahutong.plugin.storage_migration"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
     androidResources {
         // Stable allocation in the official plugin catalog; host keeps 0x7f.
@@ -40,6 +40,8 @@ android {
 }
 
 dependencies {
+    compileOnly(project(":runtime:shared"))
+    compileOnly(project(":core:host-api"))
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation("androidx.compose.runtime:runtime")
     testImplementation(kotlin("stdlib"))
@@ -65,62 +67,13 @@ dependencies {
     compileOnly(platform(libs.androidx.compose.bom))
     compileOnly(libs.androidx.ui)
     compileOnly(libs.androidx.foundation)
-    compileOnly(libs.androidx.material.icons.extended)
+    compileOnly(project(":core:icons"))
     compileOnly(libs.coil.compose)
     compileOnly("androidx.compose.material3:material3")
     compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 }
 
-tasks.register<Exec>("packageAhup") {
-    group = "ahup"
-    description = "Package the independently linked and signed storage_migration plugin"
-    dependsOn("assembleRelease")
-    doFirst {
-        val nativeLibrary = rootProject.file("native/build/storage/lib/arm64-v8a/libahup_storage.so")
-        val indexFile = rootProject.file("native/build/artifacts.json")
-        val repair = "Run python native/build_domains.py --domains storage before packaging."
-        check(nativeLibrary.isFile && nativeLibrary.length() > 0 && indexFile.isFile) {
-            "Verified storage migration native library is missing. $repair"
-        }
-        val index = groovy.json.JsonSlurper().parse(indexFile) as Map<*, *>
-        val record = (index["artifacts"] as? List<*>)?.mapNotNull { it as? Map<*, *> }
-            ?.singleOrNull { it["domain"] == "storage" && it["abi"] == "arm64-v8a" }
-            ?: error("Storage native artifact index is missing/ambiguous. $repair")
-        fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256")
-            .digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }
-        val expected = record["sha256"]?.toString()
-        check((record["size"] as? Number)?.toLong() == nativeLibrary.length() && digest(nativeLibrary.readBytes()) == expected) {
-            "Storage native artifact does not match its validated index. $repair"
-        }
-        val apk = layout.buildDirectory.file("outputs/apk/release/storage_migration-release-unsigned.apk").get().asFile
-        ZipFile(apk).use { archive ->
-            val entry = archive.getEntry("lib/arm64-v8a/libahup_storage.so")
-                ?: error("Storage migration APK omitted its required native library. $repair")
-            check(entry.size == nativeLibrary.length() && digest(archive.getInputStream(entry).use { it.readBytes() }) == expected) {
-                "Storage migration APK changed its verified native library; preserve keepDebugSymbols and rebuild."
-            }
-        }
-    }
-    commandLine(
-        providers.gradleProperty("ahupPython")
-            .orElse(providers.environmentVariable("PYTHON")).getOrElse("python"),
-        rootProject.file("scripts/package_ahup.py"),
-        projectDir.absolutePath,
-        layout.buildDirectory.file("outputs/apk/release/storage_migration-release-unsigned.apk").get().asFile.absolutePath,
-        rootProject.file("dist/ahup/storage_migration.ahup").absolutePath,
-        "--id", "storage_migration", "--title", "旧存储迁移", "--summary", "旧存储迁移",
-        "--version", "1.0.0", "--version-code", "1", "--author", "AHUTong",
-        "--entry", "com.ahu.ahutong.plugin.storage_migration.StorageMigrationPlugin",
-        "--capabilities", "PLUGIN_STORAGE",
-        "--hidden",
-        "--forbid-class-prefix", "com.ahu.ahutong.core.plugin.",
-        "--forbid-class-prefix", "androidx.compose.",
-        "--forbid-class-prefix", "kotlin.",
-        "--java", File(System.getProperty("java.home"),
-            "bin/" + if (System.getProperty("os.name").startsWith("Windows")) "java.exe" else "java"
-        ).absolutePath
-    )
-}
+apply(from = rootProject.file("gradle/ahup.gradle.kts"))
 
 // Kotlin's Gradle plugin otherwise bundles its default stdlib in every plugin.
 configurations.configureEach {

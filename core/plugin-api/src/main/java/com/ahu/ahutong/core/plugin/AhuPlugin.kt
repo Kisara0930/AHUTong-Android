@@ -3,7 +3,9 @@ package com.ahu.ahutong.core.plugin
 import androidx.compose.runtime.Composable
 
 /**
- * 安大通插件契约。一个插件 = 一个实现本接口的 object（推荐）或单例类。
+ * 可下载 UI 运行时内部的功能契约，不是原生 APK 的外层 ABI。
+ * APK 仅使用 core:host-api 的 HostPlugin（Android/JDK 参数、返回 View）。
+ * 业务组件通过 ComposePluginEntry 将本接口接入该 View 边界。
  *
  * 生命周期：插件入口卡片出现在小工具页；点击进入后宿主调用 [Entry] 渲染插件的全部内容。
  * 插件内部页面跳转由插件自己管（状态切换或自建 NavHost），宿主只给一扇门。

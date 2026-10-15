@@ -1,0 +1,1 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@layout/layout_adaptive_test_large,@layout/layout_adaptive_test_small,@layout/layout_widget_item,@drawable/widget_*" />

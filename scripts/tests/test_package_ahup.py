@@ -35,6 +35,15 @@ def dex_fixture(descriptor="Lexample/Plugin;"):
 
 
 class PackageTests(unittest.TestCase):
+    def test_linked_apk_resources_preserve_case_while_outer_payload_stays_windows_safe(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "linked.apk"
+            with zipfile.ZipFile(path, "w") as archive:
+                archive.writestr("res/9n.9.png", b"one")
+                archive.writestr("res/9N.9.png", b"two")
+            self.assertEqual(2, len(pack.read_archive(path, android_apk=True)))
+            with self.assertRaisesRegex(ValueError, "Duplicate"):
+                pack.read_archive(path)
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

@@ -13,8 +13,8 @@ android {
         applicationId = "com.ahu.ahutong.plugin.program_completion"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
     androidResources {
         // Stable allocation in the official plugin catalog; host keeps 0x7f.
@@ -34,6 +34,8 @@ android {
 }
 
 dependencies {
+    compileOnly(project(":runtime:shared"))
+    compileOnly(project(":core:host-api"))
     testImplementation(kotlin("test-junit"))
     testImplementation(kotlin("stdlib"))
     testImplementation(platform(libs.androidx.compose.bom))
@@ -68,36 +70,13 @@ dependencies {
     compileOnly(platform(libs.androidx.compose.bom))
     compileOnly(libs.androidx.ui)
     compileOnly(libs.androidx.foundation)
-    compileOnly(libs.androidx.material.icons.extended)
+    compileOnly(project(":core:icons"))
     compileOnly(libs.coil.compose)
     compileOnly("androidx.compose.material3:material3")
     compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 }
 
-tasks.register<Exec>("packageAhup") {
-    group = "ahup"
-    description = "Package the independently linked and signed campus circle plugin"
-    dependsOn("assembleRelease")
-    commandLine(
-        providers.gradleProperty("ahupPython")
-            .orElse(providers.environmentVariable("PYTHON")).getOrElse("python"),
-        rootProject.file("scripts/package_ahup.py"),
-        projectDir.absolutePath,
-        layout.buildDirectory.file("outputs/apk/release/program_completion-release-unsigned.apk").get().asFile.absolutePath,
-        rootProject.file("dist/ahup/program_completion.ahup").absolutePath,
-        "--id", "program_completion", "--title", "培养方案", "--summary", "培养方案",
-        "--version", "1.0.0", "--version-code", "1", "--author", "AHUTong",
-        "--entry", "com.ahu.ahutong.plugin.program_completion.ProgramCompletionPlugin",
-        "--capabilities", "NETWORK,PLUGIN_STORAGE",
-        "--dependency", "account:1",
-        "--forbid-class-prefix", "com.ahu.ahutong.core.plugin.",
-        "--forbid-class-prefix", "androidx.compose.",
-        "--forbid-class-prefix", "kotlin.",
-        "--java", File(System.getProperty("java.home"),
-            "bin/" + if (System.getProperty("os.name").startsWith("Windows")) "java.exe" else "java"
-        ).absolutePath
-    )
-}
+apply(from = rootProject.file("gradle/ahup.gradle.kts"))
 
 // Kotlin's Gradle plugin otherwise bundles its default stdlib in every plugin.
 configurations.configureEach {

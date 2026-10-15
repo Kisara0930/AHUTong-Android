@@ -39,14 +39,18 @@ internal class HostUpdateClient(private val context: Context, endpoint: String) 
         .readTimeout(30, TimeUnit.SECONDS).followRedirects(false).followSslRedirects(false).build()
 
     fun cancel() = http.dispatcher.cancelAll()
+    @Suppress("DEPRECATION")
+    private fun installedVersion(): Long = context.packageManager.getPackageInfo(context.packageName, 0).let {
+        if (Build.VERSION.SDK_INT >= 28) it.longVersionCode else it.versionCode.toLong()
+    }
 
     suspend fun check(): HostUpdateMetadata? = withContext(Dispatchers.IO) {
-        val url = base.resolve("v1/host/update?versionCode=${BuildConfig.VERSION_CODE}&hostApiVersion=1&runtimeVersion=1&sdk=${Build.VERSION.SDK_INT}")
+        val url = base.resolve("v1/host/update?versionCode=${installedVersion()}&hostApiVersion=2&runtimeVersion=2&sdk=${Build.VERSION.SDK_INT}")
         http.newCall(Request.Builder().url(url.toString()).build()).execute().use { response ->
             require(response.isSuccessful) { "检查更新失败：HTTP ${response.code}" }
             val bytes = requireNotNull(response.body).byteStream().use { it.readBytesLimited(256 * 1024) }
             HostUpdateVerifier.parse(bytes.toString(Charsets.UTF_8), certificate.publicKey,
-                BuildConfig.VERSION_CODE.toLong(), Build.VERSION.SDK_INT)
+                installedVersion(), Build.VERSION.SDK_INT)
         }
     }
 
@@ -100,6 +104,18 @@ internal class HostUpdateClient(private val context: Context, endpoint: String) 
         require(candidate.size == 1 && candidate.single().contentEquals(certificate.encoded) &&
             current.any { it.contentEquals(candidate.single()) }) { "APK 签名与当前宿主不一致" }
         return ZipFile(file).use { zip ->
+            if (metadata.bootstrapMode == "market") {
+                val markerEntry = requireNotNull(zip.getEntry("assets/plugin-host.json")) { "更新宿主标记缺失" }
+                require(markerEntry.size in 1..16384) { "更新宿主标记无效" }
+                val marker = zip.getInputStream(markerEntry).bufferedReader().use { JsonParser.parseReader(it).asJsonObject }
+                require(marker.get("bootstrapMode")?.asString == "market" && marker.get("hostApiVersion")?.asInt == 2 && marker.get("runtimeVersion")?.asString == "2") { "更新宿主类型不匹配" }
+                val declared = marker.getAsJsonObject("requiredPluginVersions").entrySet().associate { it.key to it.value.asLong }
+                require(declared == metadata.requiredPlugins) { "必要组件与签名更新信息不一致" }
+                val native = com.ahu.ahutong.runtime.KernelBindings.requireEnvironment()
+                native.ensureInstalled(metadata.requiredPlugins.keys.toTypedArray(), null)
+                metadata.requiredPlugins.forEach { (id, version) -> require(native.installedInfo(id).getInt("versionCode") >= version) { "请先更新基础组件 $id" } }
+                return@use metadata.requiredPlugins.keys.map { requireNotNull(AhupInstaller.manifestOf(context, it)) }
+            }
             val bootstrapEntries = mutableListOf<java.util.zip.ZipEntry>()
             val names = hashSetOf<String>()
             var archiveSize = 0L
@@ -118,7 +134,7 @@ internal class HostUpdateClient(private val context: Context, endpoint: String) 
             }
             val marker = requireNotNull(zip.getEntry("assets/plugin-host.json")) { "APK 缺少插件宿主标记" }
             val identity = zip.getInputStream(marker).use { JsonParser.parseString(it.readBytesLimited(16384).toString(Charsets.UTF_8)).asJsonObject }
-            require(identity.get("product").asString == "ahutong-plugin-host" && identity.get("hostApiVersion").asInt == 1 && identity.get("runtimeVersion").asString == "1") { "APK 插件运行环境不兼容" }
+            require(identity.get("product").asString == "ahutong-plugin-host" && identity.get("hostApiVersion").asInt == 2 && identity.get("runtimeVersion").asString == "2") { "APK 插件运行环境不兼容" }
             val bootstrap = bootstrapEntries.map { entry ->
                 LimitedBootstrapStream(zip.getInputStream(entry), entry.size).use {
                     AhupInstaller.inspect(context, it)

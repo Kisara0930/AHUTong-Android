@@ -16,6 +16,7 @@ import struct
 import subprocess
 import tempfile
 import zipfile
+import xml.etree.ElementTree as ET
 
 import package_ahup as package
 
@@ -37,6 +38,10 @@ HOST_ALLOW_PREFIXES = ("Lcom/ahu/ahutong/data/crawler/net/",)
 NATIVE_OWNERS = {"account": "account", "schedule": "schedule", "grades": "grade_exam",
                  "campus_card": "campus_card", "storage": "storage_migration"}
 REQUIRED_NATIVE_DOMAINS = {"campus_card": "campus_card", "storage_migration": "storage"}
+# Guarded runtime probes, verified against the pinned OkHttp 5.1.0 and Window 1.5.1 sources.
+# Android uses its own TLS provider; OEM window extensions may be absent. Never exempt feature ABI.
+OPTIONAL_SDK_PREFIXES = ("Lorg/conscrypt/", "Lorg/bouncycastle/jsse/",
+                         "Landroidx/window/extensions/core/util/function/")
 
 
 def descriptor_prefix(value):
@@ -101,6 +106,14 @@ def host_signature(args, trusted_der):
 
 def host_business_classes(classes, deny=HOST_DENY_PREFIXES, allow=HOST_ALLOW_PREFIXES):
     return sorted(name for name in classes if name.startswith(deny) and not name.startswith(allow))
+
+
+def framework_factory_stub(name, definition, platform_classes):
+    # R8 synthesizes this throwing API-28 placeholder for minSdk 26. RuntimeGraph always
+    # delegates android.* to the APK/boot loader, so a SDK copy never owns framework classes.
+    return (name == "Landroid/app/AppComponentFactory;" and name in platform_classes
+            and definition["parents"] == ["Ljava/lang/Object;"]
+            and definition["methods"] == {"<clinit>()V"} and not definition["fields"])
 
 
 def native_details(data):
@@ -218,6 +231,7 @@ class Dex:
                 raise ValueError("Truncated DEX string")
             strings.append(data[offset:end].decode("utf-8", "replace"))
         types = [strings[self.u32(self.u32(68) + i * 4)] for i in range(self.u32(64))]
+        self.type_refs = tuple(types)
         prototypes = []
         for i in range(self.u32(72)):
             offset = self.u32(76) + i * 12
@@ -422,6 +436,10 @@ def has_member(classes, owner, member, kind, seen=None):
 
 
 def expected_resource_ids(source_root):
+    catalog = source_root / "plugins/catalog.json"
+    if catalog.is_file():
+        components = json.loads(catalog.read_text(encoding="utf-8"))["components"]
+        return {item["id"]: int(item["resourceId"], 16) for item in components}
     output = {}
     for path in (source_root / "plugins").glob("*/build.gradle.kts"):
         match = re.search(r'"--package-id"\s*,\s*"(0x[0-9A-Fa-f]+)"', path.read_text(encoding="utf-8-sig"))
@@ -449,6 +467,12 @@ def dependency_cycles(manifests):
 
 
 def audit(args):
+    catalog_path = Path(args.source_root) / "plugins/catalog.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8")) if catalog_path.is_file() else {}
+    roles = {item["id"]: item["role"] for item in catalog.get("components", [])}
+    if catalog:
+        args.host_api_version = catalog["hostApiVersion"]
+        args.runtime_version = catalog["runtimeVersion"]
     host = read_apk(args.host)
     host_classes, _ = definitions(host)
     android_jar = args.android_jar
@@ -484,6 +508,15 @@ def audit(args):
     report["hostBusinessClasses"] = forbidden_host
     if forbidden_host:
         report["errors"].append({"hostContainsBusinessImplementations": forbidden_host})
+    marker = json.loads(host.get("assets/plugin-host.json", b"{}"))
+    if marker.get("bootstrapMode") == "market":
+        third_party = sorted(name for name in host_classes if name.startswith(SHARED_PREFIXES + (
+            "Lcom/google/", "Lorg/jsoup/", "Lcom/tencent/", "Lio/noties/", "Lorg/commonmark/")))
+        report["hostSharedRuntimeClasses"] = third_party
+        if third_party:
+            report["errors"].append({"nativeHostContainsSharedRuntime": third_party})
+        if any(name.endswith(".ahup") for name in host):
+            report["errors"].append({"nativeHostContainsEmbeddedAhup": True})
     report["hostNativeLibraries"] = sorted(name for name in host if name.startswith("lib/"))
     report["hostResources"] = resource_packages(host["resources.arsc"]) if "resources.arsc" in host else []
     if any(item["id"] != 0x7f for item in report["hostResources"]):
@@ -522,13 +555,17 @@ def audit(args):
             if manifest.get("hostApiVersion") != args.host_api_version or manifest.get("runtimeVersion") != args.runtime_version:
                 row["errors"].append({"incompatibleHostRuntime": [manifest.get("hostApiVersion"), manifest.get("runtimeVersion")]})
             duplicates = set(classes) & set(host_classes)
-            forbidden = {name for name in classes if name.startswith(SHARED_PREFIXES)}
+            stubs = {name for name in duplicates if framework_factory_stub(name, classes[name], platform_classes)
+                     and framework_factory_stub(name, host_classes[name], platform_classes)}
+            row["frameworkApiModelStubs"] = sorted(stubs)
+            duplicates -= stubs
+            forbidden = {name for name in classes if name.startswith(SHARED_PREFIXES)} if roles.get(identity, "feature") not in ("sdk", "library") else set()
             row["duplicateHostClasses"] = sorted(duplicates)
             row["generatedClassAliases"] = sorted(name for name in duplicates if re.search(r"/(?:R(?:\$[^;]+)?|BuildConfig);$", name))
             if duplicates or forbidden:
                 row["errors"].append({"duplicateSharedClasses": sorted(duplicates | forbidden)})
             for resource in packages:
-                if resource["id"] < 0x80 or resource["id"] > 0xfe or resource["id"] != expected_ids.get(identity):
+                if resource["id"] < 0x02 or resource["id"] > 0xfe or resource["id"] == 0x7f or resource["id"] != expected_ids.get(identity):
                     row["errors"].append({"unexpectedResourceId": resource, "expected": expected_ids.get(identity)})
             folder = temporary / identity
             folder.mkdir()
@@ -565,6 +602,27 @@ def audit(args):
                 if previous != identity:
                     plugin["row"]["errors"].append({"resourceIdCollision": previous})
         report["crossPluginClasses"] = {name: owners for name, owners in class_owners.items() if len(owners) > 1}
+        if marker.get("bootstrapMode") == "market":
+            # These entries deliberately are not packaged in the APK. Verify them against signed
+            # foundation DEX rather than disabling MissingClass globally or linking the SDK back in.
+            manifest_source = Path(args.source_root) / "host/src/native/AndroidManifest.xml"
+            application = ET.parse(manifest_source).getroot().find("application")
+            android_name = "{http://schemas.android.com/apk/res/android}name"
+            foundations = set(host_classes)
+            for identity, component in plugins.items():
+                if roles.get(identity) in ("sdk", "ui", "library"):
+                    foundations.update(component["classes"])
+            declared = []
+            for entry in application.iter():
+                if entry.tag not in ("application", "activity", "service", "provider", "receiver"):
+                    continue
+                name = entry.get(android_name)
+                if name:
+                    descriptor = "L" + name.replace(".", "/") + ";"
+                    declared.append(name)
+                    if descriptor not in foundations:
+                        report["errors"].append({"missingNativeSystemBridge": name})
+            report["verifiedNativeSystemBridges"] = sorted(declared)
         # Private classes in isolated sibling loaders may share names; dependencies must never shadow them.
         verified = subprocess.run([package.java_executable(args.java), str(package.SIGNER), "verify", str(certificate)] + signature_args,
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -590,6 +648,7 @@ def audit(args):
                     continue
                 visited.add(dependency["id"])
                 shadowed = dependency_classes & set(target["classes"])
+                shadowed |= set(plugin["classes"]) & set(target["classes"])
                 if shadowed:
                     plugin["row"]["errors"].append({"duplicateDependencyClasses": sorted(shadowed)})
                 available.update(target["classes"])
@@ -616,6 +675,10 @@ def audit(args):
                                 missing.add(symbol)
             plugin["row"]["sharedAbi"] = sorted(abi)
             plugin["row"]["dependencyAbi"] = sorted(dependency_abi)
+            if roles.get(identity) == "sdk":
+                optional = {symbol for symbol in missing if symbol.startswith(OPTIONAL_SDK_PREFIXES)}
+                plugin["row"]["optionalPlatformProbes"] = sorted(optional)
+                missing -= optional
             if missing:
                 plugin["row"]["errors"].append({"unresolvedAbi": sorted(missing)})
             plugin["row"]["signatureVerified"] = True

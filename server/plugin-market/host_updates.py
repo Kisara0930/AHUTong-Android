@@ -124,22 +124,49 @@ class HostUpdateStore:
                         if not isinstance(required, dict) or not required or len(required) > 128:
                             raise MarketError("requiredPluginVersions must contain bootstrap plugin versions")
                         bootstrap_bytes = 0
+                        foundation_manifests = {}
+                        bootstrap_mode = marker.get("bootstrapMode", "embedded")
+                        if bootstrap_mode not in ("embedded", "market"):
+                            raise MarketError("Unknown bootstrap mode")
+                        if bootstrap_mode == "market":
+                            if any(name.endswith(".ahup") for name in archive.namelist()):
+                                raise MarketError("Minimal native host must not embed AHUP packages")
+                            initialization = json_object(archive.read("assets/initialization.json"))
+                            if (set(initialization.get("required", [])) != set(required)
+                                    or initialization.get("hostApiVersion") != host_api
+                                    or initialization.get("runtimeVersion") != runtime):
+                                raise MarketError("Native initialization and signed host marker disagree")
                         for identifier, version in required.items():
                             plugin_id(identifier)
                             positive_int(version, "required plugin versionCode")
-                            name = "assets/bootstrap/%s.ahup" % identifier
-                            if archive.namelist().count(name) != 1 or archive.getinfo(name).file_size > 256 * 1024 * 1024:
-                                raise MarketError("Required bootstrap plugin is missing from the APK")
-                            bootstrap_bytes += archive.getinfo(name).file_size
-                            if bootstrap_bytes > 256 * 1024 * 1024:
-                                raise MarketError("Bootstrap payload exceeds 256 MiB")
-                            packaged = Path(temporary) / (identifier + ".ahup")
-                            with archive.open(name) as incoming, packaged.open("wb") as output:
-                                shutil.copyfileobj(incoming, output, 1024 * 1024)
+                            if bootstrap_mode == "market":
+                                records = [item for item in self.store.records(identifier) if item["manifest"]["versionCode"] == version]
+                                if len(records) != 1:
+                                    raise MarketError("Required native foundation is not published")
+                                packaged, record = self.store.package(identifier, version, records[0]["sha256"])
+                                if inspect_package(packaged, verifier)["sha256"] != record["sha256"]:
+                                    raise MarketError("Published foundation digest changed")
+                            else:
+                                name = "assets/bootstrap/%s.ahup" % identifier
+                                if archive.namelist().count(name) != 1 or archive.getinfo(name).file_size > 256 * 1024 * 1024:
+                                    raise MarketError("Required bootstrap plugin is missing from the APK")
+                                bootstrap_bytes += archive.getinfo(name).file_size
+                                if bootstrap_bytes > 256 * 1024 * 1024:
+                                    raise MarketError("Bootstrap payload exceeds 256 MiB")
+                                packaged = Path(temporary) / (identifier + ".ahup")
+                                with archive.open(name) as incoming, packaged.open("wb") as output:
+                                    shutil.copyfileobj(incoming, output, 1024 * 1024)
                             bootstrap = inspect_package(packaged, verifier)["manifest"]
+                            foundation_manifests[identifier] = bootstrap
                             if (bootstrap["id"] != identifier or bootstrap["versionCode"] != version
                                     or bootstrap["hostApiVersion"] != host_api or bootstrap["runtimeVersion"] != runtime):
                                 raise MarketError("Bootstrap plugin does not match the signed host compatibility metadata")
+                        if bootstrap_mode == "market":
+                            for bootstrap in foundation_manifests.values():
+                                for dependency in bootstrap["dependencies"]:
+                                    selected = required.get(dependency["id"])
+                                    if selected is None or not dependency["minVersion"] <= selected <= dependency.get("maxVersion", 2147483647):
+                                        raise MarketError("Native foundation dependency closure is incomplete or incompatible")
                 except (zipfile.BadZipFile, KeyError, UnicodeError) as error:
                     raise MarketError("Host APK has no valid plugin-host marker/bootstrap") from error
                 identity = apk_verifier(apk)
@@ -161,6 +188,7 @@ class HostUpdateStore:
                             "sha256": sha256, "size": apk.stat().st_size,
                             "url": "/v1/host/packages/%s/%s.apk" % (version, sha256),
                             "releaseNotes": release_notes, "requiredPluginVersions": required,
+                            "bootstrapMode": bootstrap_mode,
                             "apkCertificateSha256": identity.get("apkCertificateSha256", [])}
                 raw = json.dumps(metadata, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
                 signature = signer(raw)

@@ -63,7 +63,7 @@ fun HostSettings(marketUrl: String, onNavigate: (String) -> Unit = {}, onManage:
                 Modifier.size(64.dp).clip(ContinuousCapsule).background(Color.White).scale(1.65f))
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("安大通", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                Text(BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodyLarge)
+                Text(remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }, style = MaterialTheme.typography.bodyLarge)
             }
         }
         val user = SessionStore.currentUser()

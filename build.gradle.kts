@@ -33,5 +33,6 @@ tasks.register("testPluginPlatform") {
     description = "Run host, shared contract and official plugin JVM regressions"
     dependsOn(":host:testDebugUnitTest", ":core:auth:testDebugUnitTest",
         ":core:designsystem:testDebugUnitTest", ":feature:circle:testDebugUnitTest")
+    dependsOn(":bootstrap-kernel:test", ":runtime:shared:testDebugUnitTest")
     dependsOn(officialPluginProjects.map { "${it.path}:testReleaseUnitTest" })
 }

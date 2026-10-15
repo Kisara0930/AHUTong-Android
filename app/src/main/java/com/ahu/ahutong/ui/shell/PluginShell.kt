@@ -116,7 +116,8 @@ fun PluginShell(requestedPluginId: String? = null, requestedRoute: String = "", 
     var showManagement by rememberSaveable { mutableStateOf(false) }
     var showTools by rememberSaveable { mutableStateOf(false) }
     var generation by remember { mutableIntStateOf(0) }
-    var endpoint by remember { mutableStateOf(preferences.getString("market_url", "").orEmpty()) }
+    var endpoint by remember { mutableStateOf(preferences.getString("market_url", null)
+        ?: com.ahu.ahutong.runtime.KernelBindings.environment?.marketUrl().orEmpty()) }
     var endpointDraft by remember { mutableStateOf(endpoint) }
     var homeOrder by remember { mutableStateOf(preferences.getString("home_order", "").orEmpty().split(',').filter { it.isNotBlank() }) }
     var selected by remember { mutableStateOf(preferences.getStringSet("selection", emptySet()).orEmpty().toSet()) }
@@ -745,7 +746,9 @@ private fun PluginEntryPage(context: Context, id: String, plugin: AhuPlugin?, na
                         !ready -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                         plugin == null -> Text("该插件未启用，请返回功能管理。", modifier = Modifier.padding(24.dp))
                         else -> CompositionLocalProvider(LocalViewModelStoreOwner provides owner, LocalPluginNavigation provides navigation) {
-                            plugin.Entry(remember(plugin, context) { PluginHostServicesImpl(context.applicationContext, plugin, onClose) })
+                            if (com.ahu.ahutong.runtime.KernelBindings.environment != null) {
+                                NativePluginView(id, context, onRepair)
+                            } else plugin.Entry(remember(plugin, context) { PluginHostServicesImpl(context.applicationContext, plugin, onClose) })
                         }
                     }
                 }
@@ -756,20 +759,28 @@ private fun PluginEntryPage(context: Context, id: String, plugin: AhuPlugin?, na
 
 @Composable
 private fun PluginHomeCard(context: Context, plugin: AhuPlugin, onOpen: () -> Unit) {
+    val accountGeneration by AccountGeneration.changes.collectAsState()
     val marker = remember(plugin.meta.id, plugin.meta.version) { HostCrashRecovery.markPresented(plugin.meta.id, "home") }
     DisposableEffect(marker) { onDispose { HostCrashRecovery.finishPresentation(marker) } }
-    var contribution by remember(plugin.meta.id) { mutableStateOf<PluginContributions?>(null) }
-    var resources by remember(plugin.meta.id) { mutableStateOf<Context?>(null) }
-    val owner = remember(plugin.meta.id) { object : ViewModelStoreOwner { override val viewModelStore = ViewModelStore() } }
+    var contribution by remember(plugin.meta.id, plugin.meta.version, accountGeneration) { mutableStateOf<PluginContributions?>(null) }
+    var resources by remember(plugin.meta.id, plugin.meta.version, accountGeneration) { mutableStateOf<Context?>(null) }
+    var loadError by remember(plugin.meta.id, plugin.meta.version, accountGeneration) { mutableStateOf<String?>(null) }
+    val owner = remember(plugin.meta.id, plugin.meta.version, accountGeneration) { object : ViewModelStoreOwner { override val viewModelStore = ViewModelStore() } }
     DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
-    LaunchedEffect(plugin.meta.id) {
+    LaunchedEffect(plugin.meta.id, plugin.meta.version, accountGeneration) {
         runCatching {
             withContext(Dispatchers.IO) {
-                RuntimePluginLoader.ensureLoaded(context, plugin.meta.id) as? PluginContributions
+                val implementation = RuntimePluginLoader.ensureLoaded(context, plugin.meta.id) as? PluginContributions
+                    ?: error("组件未提供首页区域")
+                implementation to RuntimePluginLoader.resourceContext(context, plugin.meta.id)
             }
-        }.onSuccess {
-            contribution = it
-            resources = RuntimePluginLoader.resourceContext(context, plugin.meta.id)
+        }.onSuccess { (implementation, resourceContext) ->
+            contribution = implementation
+            resources = resourceContext
+        }.onFailure {
+            if (it is CancellationException) throw it
+            loadError = it.message ?: "组件加载失败"
+            android.util.Log.e("PluginHomeCard", "${plugin.meta.id} 首页组件加载失败", it)
         }
     }
     val implementation = contribution
@@ -777,6 +788,15 @@ private fun PluginHomeCard(context: Context, plugin: AhuPlugin, onOpen: () -> Un
     if (implementation != null && resourceContext != null) {
         CompositionLocalProvider(LocalContext provides resourceContext, LocalViewModelStoreOwner provides owner) {
             implementation.HomeCard(remember(plugin, context) { PluginHostServicesImpl(context.applicationContext, plugin) }, onOpen)
+        }
+    }
+    loadError?.let { message ->
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("${plugin.meta.title}未能加载", style = MaterialTheme.typography.titleSmall)
+                Text(message, style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = onOpen) { Text("查看并修复") }
+            }
         }
     }
 }

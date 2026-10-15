@@ -1,0 +1,732 @@
+{
+  "schemaVersion": 1,
+  "hostApiVersion": 2,
+  "runtimeVersion": "2",
+  "required": [
+    "shared_runtime",
+    "ui_runtime",
+    "account",
+    "appearance"
+  ],
+  "components": [
+    {
+      "id": "account",
+      "title": "账户与认证",
+      "summary": "账户与认证",
+      "resourceId": "0x80",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.account.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.account.AccountPlugin",
+      "versionCode": 4,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": true,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "appearance",
+      "title": "基础界面与主题",
+      "summary": "原有界面主题、组件风格与外观偏好",
+      "resourceId": "0x94",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.appearance.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.appearance.AppearancePlugin",
+      "versionCode": 3,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "PLUGIN_STORAGE"
+      ],
+      "required": true,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": true,
+      "foreground": false
+    },
+    {
+      "id": "bathroom",
+      "title": "浴室缴费",
+      "summary": "浴室缴费",
+      "resourceId": "0x88",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.bathroom.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.bathroom.BathroomPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "camera_runtime",
+      "title": "相机运行时",
+      "summary": "官方基础组件",
+      "resourceId": "0x72",
+      "role": "library",
+      "entryClass": "com.ahu.ahutong.runtime.camera.CameraRuntimeEntry",
+      "versionCode": 1,
+      "versionName": "1.0.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": false
+    },
+    {
+      "id": "campus_card",
+      "title": "校园卡与账单",
+      "summary": "校园卡与账单",
+      "resourceId": "0x86",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.campuscard.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.campuscard.CampusCardPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "campus_circle",
+      "title": "校园圈子",
+      "summary": "安大 BBS 只读浏览",
+      "resourceId": "0x92",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.feature.circle.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.feature.circle.CirclePlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "campus_guide",
+      "title": "校园指南",
+      "summary": "校园指南",
+      "resourceId": "0x8F",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.campusguide.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.campusguide.CampusGuidePlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "campus_notices",
+      "title": "校园通知",
+      "summary": "校园通知",
+      "resourceId": "0x8D",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.campus_notices.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.campus_notices.CampusNoticesPlugin",
+      "versionCode": 3,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": true,
+      "foreground": false
+    },
+    {
+      "id": "chaoxing",
+      "title": "学习通",
+      "summary": "学习通",
+      "resourceId": "0x8A",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.chaoxing.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.chaoxing.ChaoxingPlugin",
+      "versionCode": 3,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": true,
+      "foreground": false
+    },
+    {
+      "id": "content_runtime",
+      "title": "内容渲染运行时",
+      "summary": "官方基础组件",
+      "resourceId": "0x73",
+      "role": "library",
+      "entryClass": "com.ahu.ahutong.runtime.content.ContentRuntimeEntry",
+      "versionCode": 1,
+      "versionName": "1.0.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": false
+    },
+    {
+      "id": "electricity",
+      "title": "电费",
+      "summary": "电费",
+      "resourceId": "0x87",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.electricity.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.electricity.ElectricityPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": false,
+      "foreground": true
+    },
+    {
+      "id": "evaluation",
+      "title": "教学评价",
+      "summary": "教学评价",
+      "resourceId": "0x83",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.evaluation.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.evaluation.EvaluationPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "free_classroom",
+      "title": "空闲教室",
+      "summary": "空闲教室",
+      "resourceId": "0x85",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.free_classroom.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.free_classroom.FreeClassroomPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "grade_exam",
+      "title": "成绩与考试",
+      "summary": "成绩与考试",
+      "resourceId": "0x82",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.grade_exam.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.grade_exam.GradeExamPlugin",
+      "versionCode": 3,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "lost_found",
+      "title": "失物招领",
+      "summary": "失物招领",
+      "resourceId": "0x91",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.lost_found.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.lost_found.LostFoundPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "network_recharge",
+      "title": "网费充值",
+      "summary": "网费充值",
+      "resourceId": "0x89",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.networkrecharge.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.networkrecharge.NetworkRechargePlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "personalization",
+      "title": "智能助手",
+      "summary": "智能助手",
+      "resourceId": "0x93",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.personalization.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.personalization.PersonalizationPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": true,
+      "foreground": false
+    },
+    {
+      "id": "program_completion",
+      "title": "培养方案",
+      "summary": "培养方案",
+      "resourceId": "0x84",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.program_completion.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.program_completion.ProgramCompletionPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "repository",
+      "title": "学习资料",
+      "summary": "学习资料",
+      "resourceId": "0x8B",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.repository.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.repository.RepositoryPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "content_runtime",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "schedule",
+      "title": "课表",
+      "summary": "课表",
+      "resourceId": "0x81",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.schedule.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.schedule.SchedulePlugin",
+      "versionCode": 3,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "shared_runtime",
+      "title": "共享运行时",
+      "summary": "官方基础组件",
+      "resourceId": "0x70",
+      "role": "sdk",
+      "entryClass": "com.ahu.ahutong.runtime.SharedRuntimeEntry",
+      "versionCode": 1,
+      "versionName": "1.0.0",
+      "dependencies": [],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": true,
+      "userVisible": false
+    },
+    {
+      "id": "storage_migration",
+      "title": "旧存储迁移",
+      "summary": "旧存储迁移",
+      "resourceId": "0x95",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.storage_migration.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.storage_migration.StorageMigrationPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": false,
+      "homeCard": false,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "student_mail",
+      "title": "学生邮箱",
+      "summary": "学生邮箱",
+      "resourceId": "0x8C",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.student_mail.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.student_mail.StudentMailPlugin",
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 1
+        },
+        {
+          "id": "content_runtime",
+          "minVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": false,
+      "foreground": false
+    },
+    {
+      "id": "ui_runtime",
+      "title": "原有界面与导航",
+      "summary": "官方基础组件",
+      "resourceId": "0x71",
+      "role": "ui",
+      "entryClass": "com.ahu.ahutong.runtime.ui.UiRuntimeEntry",
+      "versionCode": 1,
+      "versionName": "1.0.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        },
+        {
+          "id": "account",
+          "minVersion": 4
+        },
+        {
+          "id": "appearance",
+          "minVersion": 3
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": true,
+      "userVisible": false
+    },
+    {
+      "id": "weather",
+      "title": "天气",
+      "summary": "天气",
+      "resourceId": "0x8E",
+      "role": "feature",
+      "entryClass": "com.ahu.ahutong.plugin.weather.NativeEntry",
+      "legacyEntryClass": "com.ahu.ahutong.plugin.weather.WeatherPlugin",
+      "versionCode": 3,
+      "versionName": "1.1.0",
+      "dependencies": [
+        {
+          "id": "shared_runtime",
+          "minVersion": 1,
+          "maxVersion": 1
+        }
+      ],
+      "capabilities": [
+        "NETWORK",
+        "PLUGIN_STORAGE"
+      ],
+      "required": false,
+      "userVisible": true,
+      "homeCard": true,
+      "autoStart": false,
+      "foreground": false
+    }
+  ]
+}

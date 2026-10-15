@@ -18,15 +18,19 @@ import package_ahup
 
 ROOT = Path(__file__).resolve().parents[1]
 CERTIFICATE = ROOT / "host/src/main/assets/ahup_trusted_certificate.der"
-SHARED_TESTS = ["core:common", "core:model", "core:storage", "core:auth", "core:network",
+SHARED_TESTS = ["runtime:shared", "core:common", "core:model", "core:storage", "core:auth", "core:network",
                 "core:plugin-api", "data:personalization", "data:schedule", "data:grade", "data:update"]
 
 
 def plugins():
+    catalog_path = ROOT / "plugins/catalog.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8")) if catalog_path.is_file() else None
     declared = re.findall(r'include\s*\(\s*["\']:plugins:([a-z][a-z0-9_]*)["\']\s*\)',
                           (ROOT / "settings.gradle.kts").read_text(encoding="utf-8"))
     if not declared or len(declared) != len(set(declared)):
         raise ValueError("Plugin list is empty or duplicated")
+    if catalog and set(declared) != {item["id"] for item in catalog["components"]}:
+        raise ValueError("Settings and official component catalog differ")
     for name in declared:
         if not (ROOT / "plugins" / name / "build.gradle.kts").is_file():
             raise ValueError("Declared plugin directory missing: " + name)
@@ -88,7 +92,7 @@ def task_plan(stage):
     if stage == "plugins":
         return [":plugins:%s:packageAhup" % name for name in modules]
     if stage == "tests":
-        return [":host:testDebugUnitTest"] + [":%s:testDebugUnitTest" % name for name in SHARED_TESTS] + [":plugins:%s:testDebugUnitTest" % name for name in modules]
+        return [":host:testDebugUnitTest", ":bootstrap-kernel:test"] + [":%s:testDebugUnitTest" % name for name in SHARED_TESTS] + [":plugins:%s:testDebugUnitTest" % name for name in modules]
     if stage == "host":
         return [":host:assembleDebug", ":host:assembleRelease", ":host:lintDebug", ":host:lintRelease"]
     raise ValueError("Unknown build stage")

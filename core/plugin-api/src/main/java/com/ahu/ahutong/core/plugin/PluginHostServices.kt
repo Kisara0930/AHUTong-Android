@@ -4,7 +4,8 @@ import android.content.Context
 import okhttp3.OkHttpClient
 
 /**
- * 宿主提供给插件的能力入口。插件的一切外部动作都从这里拿。
+ * 下载运行时内部的能力入口，允许使用运行时拥有的共享库。
+ * 原生 APK 不引用本接口；其外层契约为 core:host-api/HostEnvironment。
  *
  * 设计纪律（宿主实现方必读）：
  * - [http] 必须是**无全局会话**的裸客户端：不带教务/一卡通/学习通的任何 Cookie 与拦截器。

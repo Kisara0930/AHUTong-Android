@@ -209,7 +209,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.foundation)
-    implementation(libs.androidx.material.icons.extended)
+    implementation(project(":core:icons"))
     implementation(libs.material3)
     implementation(libs.miuix.android)
     implementation(libs.androidx.runtime.livedata)

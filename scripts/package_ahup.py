@@ -47,16 +47,22 @@ def safe_path(name):
     return name
 
 
-def read_archive(path):
+def read_archive(path, android_apk=False):
     result, names, total = {}, set(), 0
     with zipfile.ZipFile(path) as archive:
-        if len(archive.infolist()) > MAX_ENTRIES:
+        if len(archive.infolist()) > (50000 if android_apk else MAX_ENTRIES):
             raise ValueError("Archive contains too many entries")
         for info in archive.infolist():
-            name = safe_path(info.filename.rstrip("/"))
-            if name.casefold() in names:
+            name = info.filename.rstrip("/")
+            if android_apk:
+                if not name or name.startswith("/") or "\\" in name or ":" in name or any(part in ("", ".", "..") for part in name.split("/")) or any(ord(c) < 32 for c in name):
+                    raise ValueError("Unsafe APK entry: " + repr(name))
+            else:
+                safe_path(name)
+            key = name if android_apk else name.casefold()
+            if key in names:
                 raise ValueError("Duplicate archive entry: " + name)
-            names.add(name.casefold())
+            names.add(key)
             if (info.external_attr >> 16) & 0o170000 == 0o120000:
                 raise ValueError("Symlinks are forbidden: " + name)
             if info.is_dir():
@@ -260,7 +266,7 @@ def gather_aar(path, payload, jars, work, abis):
 
 def gather_apk(path, payload, work, abis):
     resource_entries = {}
-    for name, data in read_archive(path).items():
+    for name, data in read_archive(path, android_apk=True).items():
         if DEX_NAME.fullmatch(name):
             put_payload(payload, "dex/" + name, data)
         elif name.startswith("assets/"):
@@ -381,7 +387,7 @@ def package(args):
             compile_dex(args, jars, payload, work)
         if args.resources_apk:
             resource_file = Path(args.resources_apk)
-            if "AndroidManifest.xml" not in read_archive(resource_file):
+            if "AndroidManifest.xml" not in read_archive(resource_file, android_apk=True):
                 raise ValueError("resources.apk must contain linked AndroidManifest.xml")
             put_payload(payload, "resources.apk", resource_file.read_bytes())
         if "dex/classes.dex" not in payload:

@@ -1,0 +1,4 @@
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/host_widget_message" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:gravity="center" android:padding="16dp"
+    android:background="#F4F5F8" android:textColor="#30343B" android:textSize="14sp" />

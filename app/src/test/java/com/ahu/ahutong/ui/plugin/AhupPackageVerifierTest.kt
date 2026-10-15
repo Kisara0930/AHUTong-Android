@@ -21,8 +21,8 @@ class AhupPackageVerifierTest {
         extras: Map<String, Any> = emptyMap()): Map<String, ByteArray> {
         val manifest = linkedMapOf<String, Any>(
             "formatVersion" to 3, "id" to id, "title" to "测试插件", "entryClass" to "example.Plugin",
-            "versionCode" to version, "versionName" to "1.0", "hostApiVersion" to 1,
-            "runtimeVersion" to "1", "minSdk" to 26, "abis" to emptyList<String>(),
+            "versionCode" to version, "versionName" to "1.0", "hostApiVersion" to AhupPackageVerifier.HOST_API_VERSION,
+            "runtimeVersion" to AhupPackageVerifier.RUNTIME_VERSION, "minSdk" to 26, "abis" to emptyList<String>(),
             "capabilities" to listOf("NETWORK"), "dependencies" to dependencies,
             "files" to payload.map { (path, bytes) -> mapOf("path" to path,
                 "size" to bytes.size, "sha256" to AhupPackageVerifier.digest(bytes)) }
@@ -100,8 +100,8 @@ class AhupPackageVerifierTest {
     @Test fun checksNativeAbiHostVersionAndSdk() {
         val ordinary = verify(archive())
         AhupPackageVerifier.checkCompatibility(ordinary, 26, listOf("arm64-v8a"))
-        assertFailsWith<IllegalArgumentException> { AhupPackageVerifier.checkCompatibility(ordinary.copy(hostApiVersion = 2), 36, listOf("arm64-v8a")) }
-        assertFailsWith<IllegalArgumentException> { AhupPackageVerifier.checkCompatibility(ordinary.copy(runtimeVersion = "2"), 36, listOf("arm64-v8a")) }
+        assertFailsWith<IllegalArgumentException> { AhupPackageVerifier.checkCompatibility(ordinary.copy(hostApiVersion = 3), 36, listOf("arm64-v8a")) }
+        assertFailsWith<IllegalArgumentException> { AhupPackageVerifier.checkCompatibility(ordinary.copy(runtimeVersion = "3"), 36, listOf("arm64-v8a")) }
         assertFailsWith<IllegalArgumentException> { AhupPackageVerifier.checkCompatibility(ordinary.copy(minSdk = 36), 35, listOf("arm64-v8a")) }
         assertFailsWith<IllegalArgumentException> { AhupPackageVerifier.checkCompatibility(ordinary.copy(abis = setOf("x86_64")), 36, listOf("arm64-v8a")) }
     }

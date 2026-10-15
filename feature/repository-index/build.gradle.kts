@@ -46,7 +46,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.foundation)
     implementation(libs.material3)
-    implementation(libs.androidx.material.icons.extended)
+    implementation(project(":core:icons"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.miuix.android)

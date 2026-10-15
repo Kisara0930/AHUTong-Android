@@ -42,7 +42,7 @@ dependencies {
     implementation(composeBom)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.foundation)
-    implementation(libs.androidx.material.icons.extended)
+    implementation(project(":core:icons"))
     implementation(libs.material3)
     implementation(libs.androidx.core.ktx)
     // AppComponents 的返回手势（BackHandler）来自这里。

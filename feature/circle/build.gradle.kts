@@ -41,7 +41,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.foundation)
-    implementation(libs.androidx.material.icons.extended)
+    implementation(project(":core:icons"))
     implementation(libs.coil.compose)
     implementation("androidx.compose.material3:material3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")

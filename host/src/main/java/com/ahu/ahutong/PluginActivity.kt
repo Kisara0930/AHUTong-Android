@@ -52,8 +52,16 @@ class PluginActivity : ComponentActivity() {
         }, { callback ->
             runOnUiThread { imageResult?.invoke(null); imageResult = callback; image.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
         })
-        val app = application as PluginApplication
-        setContent {
+        val app = applicationContext as PluginApplication
+        setContentView(com.ahu.ahutong.runtime.KernelBindings.requireEnvironment()
+            .component("ui_runtime").plugin.createView(this, savedInstanceState ?: Bundle()))
+    }
+
+
+    fun createRuntimeView(): android.view.View {
+        val app = applicationContext as PluginApplication
+        return androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
             val preferences = app.preferences
             val startup = remember { preferences.getStartupThemePreferences() }
             val theme by preferences.appUiTheme.collectAsState(startup?.appUiTheme ?: AppUiTheme.MATERIAL)
@@ -71,7 +79,7 @@ class PluginActivity : ComponentActivity() {
                 }
             }
             LaunchedEffect(theme, color, mode) { preferences.rememberStartupThemePreferences(theme, color, mode) }
-            val initialized = AhupGate.isInitialized(this)
+            val initialized = AhupGate.isInitialized(this@PluginActivity)
             LaunchedEffect(plugins.map { it.meta.id to it.meta.version }, initialized) { app.activateSelected() }
             AHUTheme(AhuThemeConfig(theme, color, mode, true, parseSlotOverrides(overrides))) {
                 OriginalAppPresentation {
@@ -85,12 +93,19 @@ class PluginActivity : ComponentActivity() {
                 )
                 }
             }
+
+            }
         }
     }
 
+    override fun getApplicationContext(): android.content.Context =
+        com.ahu.ahutong.runtime.KernelBindings.environment?.application()?.applicationContext ?: super.getApplicationContext()
+    override fun getResources(): android.content.res.Resources =
+        com.ahu.ahutong.runtime.KernelBindings.environment?.application()?.resources ?: super.getResources()
+
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); readRequest(intent) }
-    override fun onStart() { super.onStart(); (application as PluginApplication).setForeground(true) }
-    override fun onStop() { (application as PluginApplication).setForeground(false); super.onStop() }
+    override fun onStart() { super.onStart(); (applicationContext as PluginApplication).setForeground(true) }
+    override fun onStop() { (applicationContext as PluginApplication).setForeground(false); super.onStop() }
     override fun onDestroy() {
         PluginHostLauncherHub.detach()
         cameraResult?.invoke(false); imageResult?.invoke(null)

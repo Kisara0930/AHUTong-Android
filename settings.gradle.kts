@@ -30,6 +30,9 @@ rootProject.name = "AHUTong"
 // Retained migration/reference sources must not accidentally produce the old monolithic APK.
 if (providers.gradleProperty("includeLegacyApp").orNull == "true") include(":app")
 include (":core:model")
+include(":core:icons")
+include(":core:host-api")
+include(":bootstrap-kernel")
 include (":core:common")
 include (":core:designsystem")
 include (":core:network")
@@ -85,3 +88,11 @@ include(":plugins:lost_found")
 include(":plugins:storage_migration")
 
 include(":plugins:student_mail")
+
+include(":runtime:shared")
+include(":runtime:camera")
+include(":runtime:content")
+include(":plugins:shared_runtime")
+include(":plugins:ui_runtime")
+include(":plugins:camera_runtime")
+include(":plugins:content_runtime")

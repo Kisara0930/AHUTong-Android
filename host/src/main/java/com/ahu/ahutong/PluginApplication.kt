@@ -27,6 +27,19 @@ class PluginApplication : Application() {
     private var foreground = false
     private val activationMutex = kotlinx.coroutines.sync.Mutex()
 
+    override fun getApplicationContext(): android.content.Context = this
+
+    override fun registerActivityLifecycleCallbacks(callback: ActivityLifecycleCallbacks) {
+        val native = com.ahu.ahutong.runtime.KernelBindings.environment?.application() as? Application
+        if (native != null && native !== this) native.registerActivityLifecycleCallbacks(callback)
+        else super.registerActivityLifecycleCallbacks(callback)
+    }
+    override fun unregisterActivityLifecycleCallbacks(callback: ActivityLifecycleCallbacks) {
+        val native = com.ahu.ahutong.runtime.KernelBindings.environment?.application() as? Application
+        if (native != null && native !== this) native.unregisterActivityLifecycleCallbacks(callback)
+        else super.unregisterActivityLifecycleCallbacks(callback)
+    }
+
     override fun onCreate() {
         super.onCreate()
         AppEnvironmentHolder.install(AndroidAppEnvironment(this))
@@ -101,7 +114,9 @@ class PluginApplication : Application() {
         if (!legacy.exists() && !incomplete) return
         val id = "storage_migration"
         if (AhupInstaller.manifestOf(context, id) == null) {
-            assets.open("migrations/storage_migration.ahup").use { input ->
+            val native = com.ahu.ahutong.runtime.KernelBindings.environment
+            if (native != null) native.ensureInstalled(arrayOf(id), null)
+            else assets.open("migrations/storage_migration.ahup").use { input ->
                 val candidate = AhupInstaller.inspect(context, input)
                 try { AhupInstaller.install(context, candidate) } finally { candidate.close() }
             }

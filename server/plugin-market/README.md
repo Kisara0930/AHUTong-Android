@@ -9,10 +9,20 @@
 ```powershell
 python server/plugin-market/publish.py verify C:/artifacts/account-1.ahup --trusted-cert C:/keys/official.der
 python server/plugin-market/publish.py publish C:/artifacts/account-1.ahup --store C:/ahutong-market --trusted-cert C:/keys/official.der
-python server/plugin-market/app.py --store C:/ahutong-market --bind 127.0.0.1 --port 8092 --required account --required appearance
+python server/plugin-market/app.py --store C:/ahutong-market --bind 127.0.0.1 --port 8092 --required shared_runtime --required ui_runtime --required account --required appearance
 ```
 
-当前 Android 宿主的必需组件为 `account`（账户）和 `appearance`（原有基础界面与主题）；多个必需插件重复传入 `--required`。Android 也保留自己的必需插件规则，不能允许市场响应取消宿主的必需组件。
+当前最小 Android 宿主使用 host API 2 / runtime 2；必需组件为 `shared_runtime`、
+`ui_runtime`、`account` 和 `appearance`。全部组件、角色、版本及依赖以
+`plugins/catalog.json` 为准，构建和审计从目录推导清单。CameraX 和内容渲染分别属于
+按需依赖的 `camera_runtime`、`content_runtime`。多个必需组件重复传入 `--required`；
+市场响应不能取消宿主的必需组件。下方 API 1 示例说明旧协议请求格式，当前客户端
+应把兼容参数改为 API 2 / runtime 2，不能混装两种运行时。
+
+APK 的 `bootstrapMode=market` 表示不内置 AHUP。宿主更新发布器会检查已发布的签名
+基础组件及依赖闭包，并核对原生初始化配置；旧的 `embedded` 模式仍可校验历史宿主。
+本地完整交付使用 `scripts/prepare_minimal_delivery.py`，生成同目录 APK、全部组件、
+市场服务、可信证书、测试说明和实际体积报告。
 
 OpenSSL 不在 PATH 时，在子命令前传入 `--openssl C:/path/to/openssl.exe`。Web 服务只有读取和解析接口，没有上传或远程管理接口；发布者需要存储目录的本地写权限。线上使用时，在前置代理终止 HTTPS，并配置连接数、请求速率及访问日志；默认只监听本机。
 

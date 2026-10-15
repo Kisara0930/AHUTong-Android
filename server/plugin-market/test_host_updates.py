@@ -82,6 +82,35 @@ class HostUpdateTests(unittest.TestCase):
         with self.assertRaisesRegex(MarketError, "not trusted"):
             self.fixture.verifier(raw.replace(b'"versionCode":100', b'"versionCode":101'), signature)
 
+    def native_apk(self, required=None):
+        required = required or {"account": 1}
+        path = self.root / "native-host.apk"
+        with zipfile.ZipFile(path, "w") as archive:
+            archive.writestr(HOST_MARKER, json.dumps({"schemaVersion": 1, "product": HOST_PRODUCT,
+                "hostApiVersion": 1, "runtimeVersion": "1", "bootstrapMode": "market", "requiredPluginVersions": required}))
+            archive.writestr("assets/initialization.json", json.dumps({"hostApiVersion": 1, "runtimeVersion": "1", "required": ["account"]}))
+            archive.writestr("classes.dex", b"native initialization only")
+        return path
+
+    def test_native_host_requires_published_signed_foundations_without_embedding_them(self):
+        path = self.native_apk()
+        with self.assertRaisesRegex(MarketError, "not published"):
+            self.publish(path)
+        self.fixture.store.publish(self.fixture.package("account"))
+        response = self.publish(path)
+        self.assertEqual("market", response["metadata"]["bootstrapMode"])
+        self.fixture.verifier(base64.b64decode(response["signedMetadata"]), base64.b64decode(response["signature"]))
+
+    def test_native_initialization_and_marker_must_agree(self):
+        self.fixture.store.publish(self.fixture.package("account"))
+        with self.assertRaisesRegex(MarketError, "disagree"):
+            self.publish(self.native_apk({"another": 1}))
+        path = self.native_apk()
+        with zipfile.ZipFile(path, "a") as archive:
+            archive.writestr("assets/bootstrap/account.ahup", self.fixture.package("account").read_bytes())
+        with self.assertRaisesRegex(MarketError, "must not embed"):
+            self.publish(path)
+
     def test_old_monolith_and_mismatched_bootstrap_never_enter_host_feed(self):
         with self.assertRaises(MarketError):
             self.publish(self.apk(marker=False))
