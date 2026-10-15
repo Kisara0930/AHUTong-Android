@@ -117,7 +117,7 @@ fun BoxScope.BottomNavBar(
     backdrop: Backdrop,
     selectedRoute: String?,
     onDestinationSelected: (String) -> Unit,
-    scanEnabled: Boolean = true,
+    scanEnabled: Boolean = false,
     onScanClick: () -> Unit = {}
 ) {
     val context = LocalContext.current

@@ -29,9 +29,9 @@ class MainViewModel @Inject constructor(
     private val settings: SettingsStore
 ) : ViewModel() {
 
-    /** 导航栏「一键扫码」入口开关（默认开；设置→偏好里可关，关掉即回到没有该按钮的原状）。 */
+    /** 导航栏「一键扫码」入口开关（默认关；设置→偏好里打开才出现该按钮）。 */
     val scanShortcutEnabled: StateFlow<Boolean> = settings.scanShortcutEnabled
-        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     init {
         // 下载器说的话翻译成界面状态：这里只做映射，规则（校验、镜像、重定向）都在 :data:update 里。

@@ -67,11 +67,11 @@ interface SettingsStore {
     suspend fun setPersonalizationEnabled(value: Boolean)
 
     /**
-     * 导航栏「一键扫码」入口开关（默认开）。关掉即回到没有该按钮的原状。
+     * 导航栏「一键扫码」入口开关（默认关）。打开才多出该按钮，关掉即回到原状。
      * 默认实现保护既有 fake 与测试。
      */
     val scanShortcutEnabled: Flow<Boolean>
-        get() = kotlinx.coroutines.flow.flowOf(true)
+        get() = kotlinx.coroutines.flow.flowOf(false)
 
     suspend fun setScanShortcutEnabled(value: Boolean) {}
 

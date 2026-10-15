@@ -170,9 +170,9 @@ class PreferencesManager @Inject constructor(@param:ApplicationContext private v
         editPreferences { it[PreferencesKeys.PERSONALIZATION_ENABLED] = value }
     }
 
-    // 纯界面开关：读失败时保持"显示"（不必像隐私开关那样倒向保守侧）
+    // 纯界面开关：未表态即"不显示"，要用户在偏好里主动打开
     override val scanShortcutEnabled: Flow<Boolean> =
-        preferences { prefs -> prefs[PreferencesKeys.SCAN_SHORTCUT_ENABLED] ?: true }
+        preferences { prefs -> prefs[PreferencesKeys.SCAN_SHORTCUT_ENABLED] ?: false }
 
     override suspend fun setScanShortcutEnabled(value: Boolean) {
         editPreferences { it[PreferencesKeys.SCAN_SHORTCUT_ENABLED] = value }

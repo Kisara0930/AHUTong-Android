@@ -54,8 +54,8 @@ class PreferencesViewModel @Inject constructor(
     private val _canteenUploadConsent = MutableStateFlow<Boolean?>(null)
     val canteenUploadConsent: StateFlow<Boolean?> = _canteenUploadConsent.asStateFlow()
 
-    /** 导航栏「一键扫码」入口开关（默认开，非三态：这一项不弹窗询问，只有开/关）。 */
-    private val _scanShortcutEnabled = MutableStateFlow(true)
+    /** 导航栏「一键扫码」入口开关（默认关，非三态：这一项不弹窗询问，只有开/关）。 */
+    private val _scanShortcutEnabled = MutableStateFlow(false)
     val scanShortcutEnabled: StateFlow<Boolean> = _scanShortcutEnabled.asStateFlow()
 
     private val _predictivePrefetchEnabled = MutableStateFlow<Boolean?>(null)
