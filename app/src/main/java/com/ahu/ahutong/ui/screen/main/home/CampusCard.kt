@@ -53,7 +53,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import android.view.WindowManager
 import dagger.hilt.android.EntryPointAccessors
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -343,11 +342,9 @@ private fun QRcodeView(balance: Double, onBack: () -> Unit) {
     }
 
     DisposableEffect(activity) {
-        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         behaviorRuntime.setInlineSensitiveUiVisible(true)
         onDispose {
             behaviorRuntime.setInlineSensitiveUiVisible(false)
-            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
     }
 
