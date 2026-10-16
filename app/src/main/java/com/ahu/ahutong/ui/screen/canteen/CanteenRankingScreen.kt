@@ -59,7 +59,7 @@ fun CanteenRankingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(CanteenPalette.pageBg)
             .statusBarsPadding()
     ) {
         Box(
@@ -176,7 +176,7 @@ private fun RankingContent(
                 Box(
                     Modifier
                         .clip(RoundedCornerShape(14.dp))
-                        .background(if (selected) CanteenPalette.accent else Color(0xFFF5F4F0))
+                        .background(if (selected) CanteenPalette.accent else CanteenPalette.chip)
                         .clickable { if (!selected) onPeriodChange(p) }
                         .padding(horizontal = 14.dp, vertical = 6.dp)
                 ) {
@@ -413,7 +413,7 @@ private fun RankingRow(item: InsightRankingItem) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
+            .background(CanteenPalette.cardBg)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -450,7 +450,7 @@ private fun RankCircle(rank: Int) {
         1 -> CanteenPalette.accent to Color.White
         2 -> CanteenPalette.gold to Color.White
         3 -> CanteenPalette.bronze to Color.White
-        else -> Color(0xFFF0EFE9) to CanteenPalette.textSecondary
+        else -> CanteenPalette.badgeBg to CanteenPalette.textSecondary
     }
     Box(
         modifier = Modifier

@@ -64,7 +64,7 @@ fun CanteenFootprintScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(CanteenPalette.pageBg)
             .statusBarsPadding()
     ) {
         // 极简页头：返回 + 顶部橙色带（点评榜单手法）
@@ -288,6 +288,7 @@ private fun HeatLegend() {
     }
 }
 
+@Composable
 private fun heatColor(count: Int): Color = when {
     count <= 0 -> CanteenPalette.heat0
     count == 1 -> CanteenPalette.heat1
@@ -301,6 +302,8 @@ private fun WindowRow(rank: Int, window: WindowStat) {
     val champion = rank == 1
     val claimed = window.windowName != null
     val dashEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+    // draw lambda 不是 composable 上下文，颜色先取出来
+    val cardLineColor = CanteenPalette.cardLine
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -308,7 +311,7 @@ private fun WindowRow(rank: Int, window: WindowStat) {
                 if (!claimed) {
                     Modifier.drawBehind {
                         drawRoundRect(
-                            color = CanteenPalette.cardLine,
+                            color = cardLineColor,
                             cornerRadius = CornerRadius(12.dp.toPx()),
                             style = Stroke(width = 1.dp.toPx(), pathEffect = dashEffect)
                         )
@@ -324,7 +327,7 @@ private fun WindowRow(rank: Int, window: WindowStat) {
             .background(
                 // 未标注卡用 drawBehind 画虚线描边，底色必须透明，否则盖住虚线
                 if (claimed) {
-                    if (champion) CanteenPalette.championBg else Color.White
+                    if (champion) CanteenPalette.championBg else CanteenPalette.cardBg
                 } else {
                     Color.Transparent
                 },
@@ -340,7 +343,7 @@ private fun WindowRow(rank: Int, window: WindowStat) {
                 // 未收录：「榴园一楼 · 77-139 号窗」；已收录：窗口名为主标题，楼层在副标题
                 window.windowName ?: "${window.location} · ${window.terminal} 号窗",
                 style = BodyText.copy(fontWeight = if (champion) FontWeight.Medium else FontWeight.Normal),
-                color = if (claimed) CanteenPalette.textPrimary else Color(0xFF666666)
+                color = if (claimed) CanteenPalette.textPrimary else CanteenPalette.unclaimedText
             )
             Text(
                 (if (claimed) "${window.location} · " else "") +
@@ -378,7 +381,7 @@ private fun RankBadge(rank: Int) {
             .clip(CircleShape)
             .then(
                 if (bordered) {
-                    Modifier.border(1.dp, Color(0xFFC8C6BE), CircleShape)
+                    Modifier.border(1.dp, CanteenPalette.medalRing, CircleShape)
                 } else {
                     Modifier.background(bg)
                 }
