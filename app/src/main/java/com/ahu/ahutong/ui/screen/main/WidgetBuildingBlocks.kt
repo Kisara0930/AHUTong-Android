@@ -143,8 +143,8 @@ internal fun DesktopScheduleWidgetCard() {
  * 「全部小工具」页的分类网格卡：图标 + 名字横排矮宽卡（48dp 高，图标 20dp）。
  *
  * 卡面无自定义背景时保持无色透明 + 细边框（与旧版 ToolItem 的零填充观感一致，只多一圈描边）；
- * 开启自定义背景时补一层磨砂底纹（surfaceContainer ×0.66，近白/近黑随深浅模式），
- * 否则文字压在图上看不清。口径与 AppCard 一致。
+ * 开启自定义背景时补一层磨砂底纹（surfaceContainer ×0.45，近白/近黑随深浅模式），
+ * 否则文字压在图上看不清。口径同 AppCard，但贴图更薄以适配 48dp 小卡。
  * 点击反馈用 `indication = null`（照 RadiantCardImpl）：不 clip 不垫色，无玻璃阴影裁切问题。
  */
 @Composable
@@ -158,7 +158,7 @@ internal fun CategorizedToolCard(
             .height(48.dp)
             .appWallpaperFrostedSurface(
                 shape = SmoothRoundedCornerShape(16.dp),
-                tint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.66f)
+                tint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.45f)
             )
             .border(
                 width = 1.dp,
