@@ -37,6 +37,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -603,7 +604,7 @@ private fun EvaluationPresetDialog(
             ) {
                 Text(
                     text = "匿名提交",
-                    color = 0.n1 withNight 100.n1,
+                    color = LocalContentColor.current,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 AppToggle(

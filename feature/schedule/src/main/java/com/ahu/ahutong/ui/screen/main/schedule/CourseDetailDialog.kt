@@ -28,8 +28,6 @@ import com.ahu.ahutong.ui.components.AppDialogSurface
 import com.ahu.ahutong.ui.components.appLiquidGlassSurface
 import com.ahu.ahutong.ui.shape.SmoothRoundedCornerShape
 import com.ahu.ahutong.ui.theme.LiquidGlassSurfaceLevel
-import com.kyant.monet.n1
-import com.kyant.monet.withNight
 
 @Composable
 fun CourseDetailDialog(
@@ -82,7 +80,7 @@ fun CourseDetailDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(2.dp)
-                    .background(80.n1 withNight 30.n1)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
             )
             Row(
                 modifier = Modifier
@@ -110,7 +108,7 @@ fun CourseDetailDialog(
                     modifier = Modifier
                         .width(2.dp)
                         .fillMaxHeight()
-                        .background(80.n1 withNight 30.n1)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
                 Row(
                     modifier = Modifier

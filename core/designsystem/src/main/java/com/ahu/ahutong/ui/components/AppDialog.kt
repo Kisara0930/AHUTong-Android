@@ -29,8 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ahu.ahutong.ui.shape.SmoothRoundedCornerShape
-import com.kyant.monet.n1
-import com.kyant.monet.withNight
 
 /** 弹窗底部胶囊按钮的风格。 */
 enum class AppDialogActionStyle { Neutral, Primary, Danger }
@@ -70,7 +68,7 @@ fun AppDialog(
         Column(
             modifier = modifier
                 .clip(SmoothRoundedCornerShape(32.dp))
-                .background(96.n1 withNight 10.n1)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
@@ -134,7 +132,7 @@ private fun AppDialogDivider() {
         modifier = Modifier
             .fillMaxWidth()
             .height(2.dp)
-            .background(80.n1 withNight 30.n1)
+            .background(MaterialTheme.colorScheme.outlineVariant)
     )
 }
 

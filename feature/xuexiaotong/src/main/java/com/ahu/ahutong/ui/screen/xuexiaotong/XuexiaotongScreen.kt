@@ -599,7 +599,7 @@ fun XuexiaotongScreen() {
             Column(
                 modifier = Modifier
                     .clip(SmoothRoundedCornerShape(32.dp))
-                    .background(96.n1 withNight 10.n1)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -620,7 +620,7 @@ fun XuexiaotongScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(2.dp)
-                        .background(80.n1 withNight 30.n1)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
                 Row(
                     modifier = Modifier
@@ -664,7 +664,7 @@ fun XuexiaotongScreen() {
             Column(
                 modifier = Modifier
                     .clip(SmoothRoundedCornerShape(32.dp))
-                    .background(96.n1 withNight 10.n1)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -685,7 +685,7 @@ fun XuexiaotongScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(2.dp)
-                        .background(80.n1 withNight 30.n1)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
                 Row(
                     modifier = Modifier

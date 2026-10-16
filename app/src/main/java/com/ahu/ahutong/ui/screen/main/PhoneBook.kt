@@ -362,7 +362,7 @@ private fun DialDialog(
                 modifier = Modifier
                     .appLiquidGlassSurface(
                         shape = dialogShape,
-                        fallbackColor = 96.n1 withNight 10.n1,
+                        fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         level = LiquidGlassSurfaceLevel.Floating,
                         backdropSamplingEnabled = false
                     )
