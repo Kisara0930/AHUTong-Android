@@ -3,6 +3,8 @@ package com.ahu.ahutong.data.adapter
 import android.util.Log
 import com.ahu.ahutong.core.common.AhuError
 import com.ahu.ahutong.core.common.AhuResult
+import com.ahu.ahutong.data.crawler.CampusCardProviderAccess
+import com.ahu.ahutong.data.crawler.CustomCampusCardBackend
 import com.ahu.ahutong.data.crawler.api.ycard.YcardApi
 import com.ahu.ahutong.data.crawler.model.ycard.ElectricityAccountPayInfoResponse
 import com.ahu.ahutong.data.crawler.model.ycard.ElectricityCampusApiResponse
@@ -42,6 +44,9 @@ class RepositoryElectricityDepositSource @Inject constructor() : ElectricityDepo
     override suspend fun options(
         query: ElectricityOptionQuery
     ): AhuResult<List<CampusDataItem>> = withContext(Dispatchers.IO) {
+        if (CampusCardProviderAccess.isCustom()) {
+            return@withContext CustomCampusCardBackend.electricityOptions(query)
+        }
         val form = when (val result = optionForm(query)) {
             is AhuResult.Failure -> return@withContext result
             is AhuResult.Success -> result.value
@@ -60,6 +65,9 @@ class RepositoryElectricityDepositSource @Inject constructor() : ElectricityDepo
         controller: ElectricityController,
         selection: RoomSelectionInfo
     ): AhuResult<ElectricityRoom> = withContext(Dispatchers.IO) {
+        if (CampusCardProviderAccess.isCustom()) {
+            return@withContext CustomCampusCardBackend.electricityRoom(controller, selection)
+        }
         val room = selection.room?.value
             ?: return@withContext missing("selectedRoomValue内容为空")
         val floor = selection.floor?.value
@@ -96,6 +104,12 @@ class RepositoryElectricityDepositSource @Inject constructor() : ElectricityDepo
     override suspend fun pay(
         payment: ElectricityPayment
     ): AhuResult<RechargeReceipt> = withContext(Dispatchers.IO) {
+        if (CampusCardProviderAccess.isCustom()) {
+            // 自定义数据源只用于查询：缴费需要走原有一整套支付签名链路，这里明确拒绝而不是回落。
+            return@withContext AhuResult.Failure(
+                AhuError.Server(-1, "自定义校园卡模式暂不支持缴费")
+            )
+        }
         try {
             val order = when (val result = createOrder(payment)) {
                 is AhuResult.Failure -> return@withContext result.withFallback("创建订单失败")

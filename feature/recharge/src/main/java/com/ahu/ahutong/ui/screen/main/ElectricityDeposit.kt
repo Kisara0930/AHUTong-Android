@@ -92,6 +92,7 @@ fun ElectricityDeposit(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val historyOptions by viewModel.historyOptions.collectAsState()
     val alertConfiguration by viewModel.alertConfiguration.collectAsState()
+    val isCustomProvider by viewModel.isCustomProvider.collectAsState()
     val focusManager = LocalFocusManager.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -127,7 +128,8 @@ fun ElectricityDeposit(
         }
     }
 
-    val canPay = (!selectedController.requiresCampus || selectedCampus != null) &&
+    val canPay = !isCustomProvider &&
+        (!selectedController.requiresCampus || selectedCampus != null) &&
         selectedBuilding != null && selectedFloor != null && selectedRoom != null &&
         fullRoomDetails != null &&
         amount.toDoubleOrNull()?.let { it > 0.0 } == true &&
@@ -238,6 +240,13 @@ fun ElectricityDeposit(
                 enabled = canPay
             ) {
                 Text(if (payState is PayState.InProgress) "正在支付" else "确认缴费")
+            }
+            if (isCustomProvider) {
+                Text(
+                    text = "自定义校园卡模式仅支持查询，暂不支持缴费。",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
@@ -521,6 +530,7 @@ private fun ElectricityRoomSelectors(viewModel: ElectricityDepositViewModel) {
     val roomsList by viewModel.roomsList.collectAsState()
     val selectedRoom by viewModel.selectedRoom.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isCustomProvider by viewModel.isCustomProvider.collectAsState()
     val controllerOptions = remember {
         ElectricityController.entries.map { AppSelectOption(it, it.displayName) }
     }
@@ -546,15 +556,17 @@ private fun ElectricityRoomSelectors(viewModel: ElectricityDepositViewModel) {
         else -> ElectricitySelectorLevel.Room
     }
     val selectorContent: @Composable ColumnScope.() -> Unit = {
-        AppSelectField(
-            label = "电控入口",
-            selected = selectedController,
-            options = controllerOptions,
-            onSelected = viewModel::onControllerSelected,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading,
-            miuixStandalone = true
-        )
+        if (!isCustomProvider) {
+            AppSelectField(
+                label = "电控入口",
+                selected = selectedController,
+                options = controllerOptions,
+                onSelected = viewModel::onControllerSelected,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                miuixStandalone = true
+            )
+        }
         if (selectedController.requiresCampus) {
             ElectricitySelectorField(
                 label = "校区",

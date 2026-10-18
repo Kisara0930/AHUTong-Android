@@ -4,7 +4,9 @@ import com.ahu.ahutong.core.common.AhuResult
 import com.ahu.ahutong.core.common.AhuError
 import com.ahu.ahutong.data.crawler.PayState
 import com.ahu.ahutong.data.model.CampusDataItem
+import com.ahu.ahutong.data.model.CampusCardProvider
 import com.ahu.ahutong.data.model.ElectricityController
+import com.ahu.ahutong.data.model.ElectricityDepositHistoryItem
 import com.ahu.ahutong.data.model.RoomSelectionInfo
 import com.ahu.ahutong.data.recharge.ElectricityRoom
 import com.ahu.ahutong.data.recharge.ElectricityRoomDetails
@@ -16,6 +18,7 @@ import com.ahu.ahutong.personalization.preset.PresetSubmission
 import com.ahu.ahutong.personalization.preset.PresetSuggestions
 import com.ahu.ahutong.personalization.semantic.SemanticDomain
 import com.ahu.ahutong.testing.FakeBehaviorRecorder
+import com.ahu.ahutong.testing.FakeCampusCardModeSetting
 import com.ahu.ahutong.testing.FakeElectricityDepositSource
 import com.ahu.ahutong.testing.FakeElectricityAlertSettings
 import com.ahu.ahutong.testing.FakePaymentKeyboardSetting
@@ -59,7 +62,8 @@ class ElectricityDepositViewModelTest {
             FakeBehaviorRecorder(),
             EmptyPresetSuggestions,
             FakePaymentKeyboardSetting(),
-            FakeElectricityAlertSettings()
+            FakeElectricityAlertSettings(),
+            FakeCampusCardModeSetting()
         )
         advanceUntilIdle()
 
@@ -210,11 +214,44 @@ class ElectricityDepositViewModelTest {
         assertEquals(5, paymentViewModel.alertConfiguration.value.rooms.single().thresholdDays)
     }
 
+    @Test
+    fun `custom provider forces the controller to C and drops rooms from the other backend`() = runTest(dispatcher) {
+        val customRoom = selection()
+        val legacyRoom = selection().copy(controller = ElectricityController.A)
+        val source = FakeElectricityDepositSource(
+            controller = ElectricityController.A,
+            selection = null,
+            optionsResult = AhuResult.Success(listOfNotNull(customRoom.room)),
+            roomResult = AhuResult.Success(room()),
+            payResult = AhuResult.Success(RechargeReceipt("order-1"))
+        )
+        source.saveDepositHistory(
+            listOf(
+                ElectricityDepositHistoryItem(customRoom, "自定义", updatedAt = 2L, confirmedByPayment = false),
+                ElectricityDepositHistoryItem(legacyRoom, "原有", updatedAt = 1L, confirmedByPayment = false)
+            )
+        )
+
+        val subject = ElectricityDepositViewModel(
+            source, FakeBehaviorRecorder(), EmptyPresetSuggestions,
+            FakePaymentKeyboardSetting(), FakeElectricityAlertSettings(),
+            FakeCampusCardModeSetting(CampusCardProvider.CUSTOM)
+        )
+        advanceUntilIdle()
+
+        assertTrue(subject.isCustomProvider.value)
+        assertEquals(ElectricityController.C, subject.selectedController.value)
+        // 原有系统的房间不会出现在「最近使用的房间」里。
+        assertEquals(listOf(customRoom), subject.historyOptions.value.map { it.selection })
+        assertEquals(ElectricityController.C, source.roomQueries.last().first)
+    }
+
     private fun viewModel(
         source: FakeElectricityDepositSource,
         settings: FakeElectricityAlertSettings = FakeElectricityAlertSettings()
     ) = ElectricityDepositViewModel(
-        source, FakeBehaviorRecorder(), EmptyPresetSuggestions, FakePaymentKeyboardSetting(), settings
+        source, FakeBehaviorRecorder(), EmptyPresetSuggestions, FakePaymentKeyboardSetting(),
+        settings, FakeCampusCardModeSetting()
     )
 
     private fun source(selection: RoomSelectionInfo) = FakeElectricityDepositSource(

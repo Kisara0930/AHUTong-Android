@@ -4,6 +4,8 @@ import com.ahu.ahutong.core.storage.SettingsStore
 import com.ahu.ahutong.core.storage.StartupThemePreferences
 import com.ahu.ahutong.data.model.AppThemeMode
 import com.ahu.ahutong.data.model.AppUiTheme
+import com.ahu.ahutong.data.model.CampusCardProvider
+import com.ahu.ahutong.data.session.CredentialVault
 import com.ahu.ahutong.personalization.bootstrap.BootstrapContributionStatus
 import com.ahu.ahutong.personalization.action.AppActionId
 import com.ahu.ahutong.personalization.recorder.BehaviorRecorder
@@ -38,6 +40,8 @@ class FakeSettingsStore : SettingsStore {
     override val courseReminderEnabled = MutableStateFlow(false)
     override val courseReminderLiveCountdownEnabled = MutableStateFlow(false)
     override val repositoryAccelerationSource = MutableStateFlow("jsdelivr")
+    override val campusCardProvider = MutableStateFlow(CampusCardProvider.AHU)
+    override val campusCardCustomAccount = MutableStateFlow<String?>(null)
     override val personalizationEnabled = MutableStateFlow(true)
     override val predictivePrefetchEnabled = MutableStateFlow(false)
     override val wifiOnlyPrefetch = MutableStateFlow(false)
@@ -94,6 +98,14 @@ class FakeSettingsStore : SettingsStore {
 
     override suspend fun setRepositoryAccelerationSource(value: String) {
         repositoryAccelerationSource.value = value
+    }
+
+    override suspend fun setCampusCardProvider(value: CampusCardProvider) {
+        campusCardProvider.value = value
+    }
+
+    override suspend fun setCampusCardCustomAccount(value: String?) {
+        campusCardCustomAccount.value = value
     }
 
     override suspend fun setPersonalizationEnabled(value: Boolean) {
@@ -265,6 +277,26 @@ class FakeAppDataReset : AppDataReset {
 
     override suspend fun clearAll() {
         clearCount++
+    }
+}
+
+/** 只记内存的凭据保险箱 fake：自定义校园卡密码。 */
+open class FakeCredentialVault(var campusCardPassword: String? = null) : CredentialVault {
+
+    override fun saveWisdomPassword(password: String) = Unit
+
+    override fun wisdomPassword(): String? = null
+
+    override fun clearWisdomPassword() = Unit
+
+    override fun saveCampusCardPassword(password: String) {
+        campusCardPassword = password
+    }
+
+    override fun campusCardPassword(): String? = campusCardPassword
+
+    override fun clearCampusCardPassword() {
+        campusCardPassword = null
     }
 }
 

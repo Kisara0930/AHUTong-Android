@@ -20,6 +20,7 @@ import com.ahu.ahutong.core.storage.fallbackToDefaultOnReadFailure
 import com.ahu.ahutong.core.storage.retryOnceOnWriteFailure
 import com.ahu.ahutong.data.model.AppThemeMode
 import com.ahu.ahutong.data.model.AppUiTheme
+import com.ahu.ahutong.data.model.CampusCardProvider
 import com.ahu.ahutong.data.model.DEFAULT_THEME_COLOR
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +44,8 @@ object PreferencesKeys {
     val THEME_COLOR = stringPreferencesKey("theme_color_hex")
     val THEME_MODE = stringPreferencesKey("theme_mode")
     val REPOSITORY_ACCELERATION_SOURCE = stringPreferencesKey("repository_acceleration_source")
+    val CAMPUS_CARD_PROVIDER = stringPreferencesKey("campus_card_provider")
+    val CAMPUS_CARD_CUSTOM_ACCOUNT = stringPreferencesKey("campus_card_custom_account")
     val PERSONALIZATION_ENABLED = booleanPreferencesKey("personalization_enabled")
     val PREDICTIVE_PREFETCH_ENABLED = booleanPreferencesKey("predictive_prefetch_enabled")
     val WIFI_ONLY_PREFETCH = booleanPreferencesKey("wifi_only_prefetch")
@@ -321,6 +324,30 @@ class PreferencesManager @Inject constructor(@param:ApplicationContext private v
     override suspend fun setRepositoryAccelerationSource(value: String) {
         editPreferences { prefs ->
             prefs[PreferencesKeys.REPOSITORY_ACCELERATION_SOURCE] = value
+        }
+    }
+
+    override val campusCardProvider: Flow<CampusCardProvider> = preferences { prefs ->
+        CampusCardProvider.fromStorage(prefs[PreferencesKeys.CAMPUS_CARD_PROVIDER])
+    }
+
+    override suspend fun setCampusCardProvider(value: CampusCardProvider) {
+        editPreferences { prefs ->
+            prefs[PreferencesKeys.CAMPUS_CARD_PROVIDER] = value.storageValue
+        }
+    }
+
+    override val campusCardCustomAccount: Flow<String?> = preferences { prefs ->
+        prefs[PreferencesKeys.CAMPUS_CARD_CUSTOM_ACCOUNT]
+    }
+
+    override suspend fun setCampusCardCustomAccount(value: String?) {
+        editPreferences { prefs ->
+            if (value.isNullOrBlank()) {
+                prefs.remove(PreferencesKeys.CAMPUS_CARD_CUSTOM_ACCOUNT)
+            } else {
+                prefs[PreferencesKeys.CAMPUS_CARD_CUSTOM_ACCOUNT] = value
+            }
         }
     }
 

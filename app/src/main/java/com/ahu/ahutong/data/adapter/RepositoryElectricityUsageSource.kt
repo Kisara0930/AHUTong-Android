@@ -2,6 +2,7 @@ package com.ahu.ahutong.data.adapter
 
 import com.ahu.ahutong.core.common.AhuError
 import com.ahu.ahutong.core.common.AhuResult
+import com.ahu.ahutong.data.crawler.CampusCardProviderAccess
 import com.ahu.ahutong.data.crawler.api.ycard.YcardApi
 import com.ahu.ahutong.data.crawler.model.ycard.ElectricityUsageHistoryPage
 import com.ahu.ahutong.data.crawler.model.ycard.ElectricityUsageProtocol
@@ -29,6 +30,12 @@ class RepositoryElectricityUsageSource @Inject constructor() : ElectricityUsageS
         selection: RoomSelectionInfo,
         asOf: LocalDate
     ): AhuResult<ElectricityUsageSnapshot> = withContext(Dispatchers.IO) {
+        if (CampusCardProviderAccess.isCustom()) {
+            // 自定义数据源没有用电历史接口，按约定明确提示不支持，不回落到原有系统。
+            return@withContext AhuResult.Failure(
+                AhuError.ProtocolChanged("自定义校园卡模式暂不支持用电记录")
+            )
+        }
         val building = selection.building?.value?.takeIf { it.isNotBlank() }
             ?: return@withContext protocolFailure("未选择楼栋")
         val floor = selection.floor?.value?.takeIf { it.isNotBlank() }

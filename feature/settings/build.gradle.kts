@@ -40,6 +40,8 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:storage"))
     implementation(project(":core:designsystem"))
+    // 自定义校园卡密码走 CredentialVault 接口（R17 只禁实现类 SecureCredentialVault）。
+    implementation(project(":core:auth"))
     implementation(project(":data:personalization"))
     implementation(project(":data:repository-index"))
 

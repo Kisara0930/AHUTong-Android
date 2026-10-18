@@ -5,6 +5,7 @@ import com.ahu.ahutong.core.storage.StartupThemePreferences
 import com.ahu.ahutong.data.model.AppThemeMode
 import com.ahu.ahutong.data.model.DEFAULT_THEME_COLOR
 import com.ahu.ahutong.data.model.AppUiTheme
+import com.ahu.ahutong.data.model.CampusCardProvider
 import com.ahu.ahutong.personalization.bootstrap.BootstrapContributionStatus
 import com.ahu.ahutong.personalization.semantic.MutationId
 import com.ahu.ahutong.personalization.settings.PersonalizationSettings
@@ -12,6 +13,7 @@ import com.ahu.ahutong.testing.FakePersonalizationSettings
 import com.ahu.ahutong.testing.FakeCourseReminderControl
 import com.ahu.ahutong.testing.FakeBehaviorRecorder
 import com.ahu.ahutong.testing.FakeRepositoryIndex
+import com.ahu.ahutong.testing.FakeCredentialVault
 import com.ahu.ahutong.testing.FakeSettingsStore
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -55,12 +57,13 @@ class PreferencesViewModelTest {
 
     private val reminders = FakeCourseReminderControl()
     private val behavior = FakeBehaviorRecorder()
+    private val credentials = FakeCredentialVault()
 
     private fun viewModel(
         store: SettingsStore = FakeSettingsStore(),
         personalization: FakePersonalizationSettings = FakePersonalizationSettings(),
         repository: FakeRepositoryIndex = FakeRepositoryIndex()
-    ) = PreferencesViewModel(store, personalization, reminders, repository, behavior)
+    ) = PreferencesViewModel(store, personalization, reminders, repository, behavior, credentials)
 
     @Test
     fun `enabling waits for storage before scheduling and a following disable wins`() = runTest {
@@ -282,5 +285,55 @@ class PreferencesViewModelTest {
         val viewModel = viewModel(FakeSettingsStore(), personalization)
 
         assertEquals(3, viewModel.bootstrapContributionStatus.value.pendingExamples)
+    }
+
+    @Test
+    fun `switching the campus card provider persists it`() {
+        val store = FakeSettingsStore()
+        val viewModel = viewModel(store, FakePersonalizationSettings())
+
+        assertEquals(CampusCardProvider.AHU, viewModel.campusCardProvider.value)
+
+        viewModel.setCampusCardProvider(CampusCardProvider.CUSTOM)
+
+        assertEquals(CampusCardProvider.CUSTOM, store.campusCardProvider.value)
+        assertEquals(CampusCardProvider.CUSTOM, viewModel.campusCardProvider.value)
+    }
+
+    @Test
+    fun `saving campus card credentials stores account in settings and password in the vault`() {
+        val store = FakeSettingsStore()
+        val viewModel = viewModel(store, FakePersonalizationSettings())
+
+        viewModel.saveCampusCardCredentials("  20210001  ", "secret")
+
+        assertEquals("20210001", store.campusCardCustomAccount.value)
+        assertEquals("secret", credentials.campusCardPassword)
+        assertTrue(viewModel.campusCardCustomPasswordSet.value)
+    }
+
+    @Test
+    fun `an empty password keeps the stored one while updating the account`() {
+        val store = FakeSettingsStore()
+        credentials.campusCardPassword = "keep-me"
+        val viewModel = viewModel(store, FakePersonalizationSettings())
+
+        viewModel.saveCampusCardCredentials("20210002", "")
+
+        assertEquals("20210002", store.campusCardCustomAccount.value)
+        assertEquals("keep-me", credentials.campusCardPassword)
+    }
+
+    @Test
+    fun `clearing campus card credentials wipes both the vault and the account`() {
+        val store = FakeSettingsStore().apply { campusCardCustomAccount.value = "20210001" }
+        credentials.campusCardPassword = "secret"
+        val viewModel = viewModel(store, FakePersonalizationSettings())
+
+        viewModel.clearCampusCardCredentials()
+
+        assertNull(credentials.campusCardPassword)
+        assertNull(store.campusCardCustomAccount.value)
+        assertFalse(viewModel.campusCardCustomPasswordSet.value)
     }
 }

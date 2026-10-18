@@ -1,6 +1,7 @@
 package com.ahu.ahutong.di
 
 import com.ahu.ahutong.core.storage.SettingsStore
+import com.ahu.ahutong.core.storage.CampusCardModeSetting
 import com.ahu.ahutong.core.storage.PaymentKeyboardSetting
 import com.ahu.ahutong.core.storage.CourseReminderSettings
 import com.ahu.ahutong.data.dao.PreferencesManager
@@ -37,6 +38,13 @@ abstract class SettingsWiringModule {
     abstract fun bindPaymentKeyboardSetting(
         implementation: PreferencesManager
     ): PaymentKeyboardSetting
+
+    /** 交电费只问"当前用哪套校园卡后端"：同一条设置，窄的一种问法。 */
+    @Binds
+    @Singleton
+    abstract fun bindCampusCardModeSetting(
+        implementation: PreferencesManager
+    ): CampusCardModeSetting
 
     /** 后台只问两条提醒设置：同一条设置，窄的一种问法。 */
     @Binds

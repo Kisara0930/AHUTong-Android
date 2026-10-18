@@ -10,6 +10,8 @@ import com.ahu.ahutong.data.repository.RepositoryIndex
 import com.ahu.ahutong.data.model.DEFAULT_THEME_COLOR
 import com.ahu.ahutong.data.model.AppThemeMode
 import com.ahu.ahutong.data.model.AppUiTheme
+import com.ahu.ahutong.data.model.CampusCardProvider
+import com.ahu.ahutong.data.session.CredentialVault
 import com.ahu.ahutong.personalization.bootstrap.BootstrapContributionStatus
 import com.ahu.ahutong.personalization.recorder.BehaviorRecorder
 import com.ahu.ahutong.personalization.semantic.MutationId
@@ -19,6 +21,7 @@ import com.ahu.ahutong.ui.theme.pack.SlotSource
 import com.ahu.ahutong.ui.theme.pack.parseSlotOverrides
 import com.ahu.ahutong.ui.theme.pack.serializeSlotOverrides
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +30,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import javax.inject.Inject
 
@@ -43,7 +47,8 @@ class PreferencesViewModel @Inject constructor(
     private val personalization: PersonalizationSettings,
     private val reminders: CourseReminderControl,
     private val repository: RepositoryIndex,
-    private val behavior: BehaviorRecorder
+    private val behavior: BehaviorRecorder,
+    private val credentials: CredentialVault
 ) : ViewModel() {
 
     private val startupThemePreferences = settings.getStartupThemePreferences()
@@ -125,6 +130,20 @@ class PreferencesViewModel @Inject constructor(
     val repositoryAccelerationSource: StateFlow<String> =
         _repositoryAccelerationSource.asStateFlow()
 
+    // ── 校园卡数据源：原有（安大）与用户自定义 API ──
+
+    private val _campusCardProvider = MutableStateFlow(CampusCardProvider.AHU)
+    val campusCardProvider: StateFlow<CampusCardProvider> = _campusCardProvider.asStateFlow()
+
+    /** 自定义 API 账号（非机密，可回显）。 */
+    private val _campusCardCustomAccount = MutableStateFlow("")
+    val campusCardCustomAccount: StateFlow<String> = _campusCardCustomAccount.asStateFlow()
+
+    /** 自定义 API 是否已设置密码。密码只在保险箱里，界面读不到明文，只能知道有没有。 */
+    private val _campusCardCustomPasswordSet = MutableStateFlow(false)
+    val campusCardCustomPasswordSet: StateFlow<Boolean> =
+        _campusCardCustomPasswordSet.asStateFlow()
+
     val bootstrapContributionStatus: StateFlow<BootstrapContributionStatus> =
         personalization.contributionStatus
 
@@ -188,6 +207,22 @@ class PreferencesViewModel @Inject constructor(
         viewModelScope.launch {
             settings.repositoryAccelerationSource.collect {
                 _repositoryAccelerationSource.value = it
+            }
+        }
+        viewModelScope.launch {
+            settings.campusCardProvider.collect {
+                _campusCardProvider.value = it
+            }
+        }
+        viewModelScope.launch {
+            settings.campusCardCustomAccount.collect {
+                _campusCardCustomAccount.value = it.orEmpty()
+            }
+        }
+        viewModelScope.launch {
+            // Keystore 读取是阻塞 I/O，挪到 IO 线程，避免影响首帧。
+            _campusCardCustomPasswordSet.value = withContext(Dispatchers.IO) {
+                credentials.campusCardPassword()?.isNotBlank() == true
             }
         }
     }
@@ -376,6 +411,36 @@ class PreferencesViewModel @Inject constructor(
                 coarseValueBucket = "SOURCE_CHANGED"
             )
         }
+    }
+
+    fun setCampusCardProvider(value: CampusCardProvider) {
+        _campusCardProvider.value = value
+        writeSetting { settings.setCampusCardProvider(value) }
+    }
+
+    fun setCampusCardCustomAccount(value: String) {
+        _campusCardCustomAccount.value = value
+        writeSetting { settings.setCampusCardCustomAccount(value.takeIf { it.isNotBlank() }) }
+    }
+
+    /**
+     * 保存自定义校园卡账密。密码进 CredentialVault（Keystore），账号进设置；
+     * 密码为空时保留原密码，便于只改账号。
+     */
+    fun saveCampusCardCredentials(account: String, password: String) {
+        val trimmed = account.trim()
+        _campusCardCustomAccount.value = trimmed
+        if (password.isNotBlank()) {
+            credentials.saveCampusCardPassword(password)
+            _campusCardCustomPasswordSet.value = true
+        }
+        writeSetting { settings.setCampusCardCustomAccount(trimmed.takeIf { it.isNotBlank() }) }
+    }
+
+    fun clearCampusCardCredentials() {
+        credentials.clearCampusCardPassword()
+        _campusCardCustomPasswordSet.value = false
+        setCampusCardCustomAccount("")
     }
 
     private companion object {

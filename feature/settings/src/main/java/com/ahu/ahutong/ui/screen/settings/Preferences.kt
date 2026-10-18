@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,6 +52,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ahu.ahutong.data.model.AppThemeMode
 import com.ahu.ahutong.data.model.AppUiTheme
+import com.ahu.ahutong.data.model.CampusCardProvider
 import com.ahu.ahutong.data.model.DEFAULT_THEME_COLOR
 import com.ahu.ahutong.ui.components.SettingsActionRow
 import com.ahu.ahutong.ui.components.SettingsBackdropContainer
@@ -63,6 +65,7 @@ import com.ahu.ahutong.ui.components.SettingsSelectRow
 import com.ahu.ahutong.ui.components.SettingsPageLayout
 import com.ahu.ahutong.ui.components.SettingsSection
 import com.ahu.ahutong.ui.components.SettingsToggleRow
+import com.ahu.ahutong.ui.components.AppTextField
 import com.ahu.ahutong.ui.shape.SmoothRoundedCornerShape
 import com.ahu.ahutong.ui.state.PreferencesViewModel
 
@@ -105,6 +108,11 @@ fun Preferences(
     val courseReminderLiveCountdownEnabled by
         viewModel.courseReminderLiveCountdownEnabled.collectAsState()
     val bootstrapContributionStatus by viewModel.bootstrapContributionStatus.collectAsState()
+
+    val campusCardProvider by viewModel.campusCardProvider.collectAsState()
+    val campusCardCustomAccount by viewModel.campusCardCustomAccount.collectAsState()
+    val campusCardCustomPasswordSet by viewModel.campusCardCustomPasswordSet.collectAsState()
+    var showCampusCardCredentialDialog by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -252,6 +260,42 @@ fun Preferences(
             )
         }
 
+            SettingsSection(
+                title = "校园卡数据源",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                backdrop = backdrop
+            ) {
+                SettingsSelectRow(
+                    title = "数据来源",
+                    subtitle = "查询余额、账单与电费时使用的后端",
+                    selected = campusCardProvider,
+                    choices = listOf(
+                        SettingsChoice(CampusCardProvider.AHU, "安大本部"),
+                        SettingsChoice(CampusCardProvider.CUSTOM, "金寨路校园卡")
+                    ),
+                    onSelected = viewModel::setCampusCardProvider
+                )
+                if (campusCardProvider == CampusCardProvider.CUSTOM) {
+                    SettingsActionRow(
+                        title = "金寨路校园卡账号",
+                        subtitle = buildString {
+                            append(campusCardCustomAccount.ifBlank { "未设置账号" })
+                            append(if (campusCardCustomPasswordSet) " · 已设置密码" else " · 未设置密码")
+                        },
+                        showDivider = false,
+                        onClick = { showCampusCardCredentialDialog = true }
+                    )
+                } else {
+                    SettingsActionRow(
+                        title = "金寨路校园卡账号",
+                        subtitle = "切换到金寨路校园卡后可填写账号密码",
+                        showChevron = false,
+                        showDivider = false,
+                        onClick = {}
+                    )
+                }
+            }
+
             if (undergraduateEnabled) SettingsSection(
                 title = "通知",
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -383,6 +427,63 @@ fun Preferences(
                 showDeleteTrainingContribution = false
             },
             onDismiss = { showDeleteTrainingContribution = false }
+        )
+    }
+
+    if (showCampusCardCredentialDialog) {
+        var accountInput by remember(campusCardCustomAccount) {
+            mutableStateOf(campusCardCustomAccount)
+        }
+        var passwordInput by remember { mutableStateOf("") }
+        AppDialog(
+            title = "金寨路校园卡账号",
+            onDismiss = { showCampusCardCredentialDialog = false },
+            contentSpacing = 12.dp,
+            actions = listOf(
+                AppDialogAction(
+                    "取消",
+                    onClick = { showCampusCardCredentialDialog = false }
+                ),
+                AppDialogAction(
+                    "保存",
+                    onClick = {
+                        viewModel.saveCampusCardCredentials(accountInput, passwordInput)
+                        showCampusCardCredentialDialog = false
+                    },
+                    style = AppDialogActionStyle.Primary
+                )
+            ),
+            content = {
+                AppTextField(
+                    value = accountInput,
+                    onValueChange = { accountInput = it },
+                    label = "账号",
+                    modifier = Modifier.fillMaxWidth()
+                )
+                AppTextField(
+                    value = passwordInput,
+                    onValueChange = { passwordInput = it },
+                    label = if (campusCardCustomPasswordSet) "密码（留空不修改）" else "密码",
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation()
+                )
+                Text(
+                    "仅用于该校自建一卡通服务（ykt.hfue.edu.cn），与安大统一认证账号无关；" +
+                        "自定义模式下余额、账单与电费查询走该服务，缴费暂不支持。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (campusCardCustomPasswordSet || campusCardCustomAccount.isNotBlank()) {
+                    TextButton(
+                        onClick = {
+                            viewModel.clearCampusCardCredentials()
+                            showCampusCardCredentialDialog = false
+                        }
+                    ) {
+                        Text("清除已保存的账号密码")
+                    }
+                }
+            }
         )
     }
 }

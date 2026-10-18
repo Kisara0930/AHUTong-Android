@@ -11,6 +11,7 @@ import com.ahu.ahutong.data.security.SecureBoxStore
 object SecureCredentialVault : CredentialVault {
 
     private const val KEY = "password_wisdom"
+    private const val CAMPUS_CARD_KEY = "password_campus_card"
 
     override fun saveWisdomPassword(password: String) {
         if (password.isEmpty()) SecureBoxStore.remove(KEY) else SecureBoxStore.put(KEY, password)
@@ -20,5 +21,17 @@ object SecureCredentialVault : CredentialVault {
         SecureBoxStore.getOrMigrate(KEY) { SecureBoxStore.legacyString(KEY) }
 
     override fun clearWisdomPassword() = SecureBoxStore.remove(KEY)
+
+    override fun saveCampusCardPassword(password: String) {
+        if (password.isEmpty()) {
+            SecureBoxStore.remove(CAMPUS_CARD_KEY)
+        } else {
+            SecureBoxStore.put(CAMPUS_CARD_KEY, password)
+        }
+    }
+
+    override fun campusCardPassword(): String? = SecureBoxStore.get(CAMPUS_CARD_KEY)
+
+    override fun clearCampusCardPassword() = SecureBoxStore.remove(CAMPUS_CARD_KEY)
 }
 

@@ -6,11 +6,14 @@ import com.ahu.ahutong.core.common.AhuResult
 import com.ahu.ahutong.core.common.toUserMessage
 import com.ahu.ahutong.core.storage.PaymentKeyboardSetting
 import com.ahu.ahutong.core.storage.ElectricityAlertSettings
+import com.ahu.ahutong.core.storage.CampusCardModeSetting
 import com.ahu.ahutong.data.crawler.PayState
+import com.ahu.ahutong.data.model.CampusCardProvider
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.CancellationException
@@ -54,13 +57,22 @@ class ElectricityDepositViewModel @Inject constructor(
     private val behavior: BehaviorRecorder,
     private val presets: PresetSuggestions,
     settings: PaymentKeyboardSetting,
-    private val alertSettings: ElectricityAlertSettings
+    private val alertSettings: ElectricityAlertSettings,
+    private val campusCardMode: CampusCardModeSetting
 ) : ViewModel() {
 
     /** 支付密码键盘：null 表示设置还没读出来（界面此时不渲染对话框，与迁移前一致）。 */
     val builtInKeyboard: StateFlow<Boolean?> = settings.useBuiltInSecurePasswordKeyboard
         .map { it as Boolean? }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /**
+     * 自定义校园卡模式：电控类型固定为后端内置项，界面隐藏入口；缴费同样不可用。
+     * 初值 false，真实值在 init 的协程里落地，避免首帧闪烁。
+     */
+    val isCustomProvider: StateFlow<Boolean> = campusCardMode.campusCardProvider
+        .map { it == CampusCardProvider.CUSTOM }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val alertConfiguration: StateFlow<ElectricityAlertConfiguration> = alertSettings.configuration
         .stateIn(viewModelScope, SharingStarted.Eagerly, ElectricityAlertConfiguration())
@@ -160,27 +172,51 @@ class ElectricityDepositViewModel @Inject constructor(
             .distinctBy { selectionKey(it.selection) }
             .take(MAX_ROOM_HISTORY)
         _historyOptions.value = history
-        val lastSelection = source.roomSelection()
-            ?.takeIf {
-                isCompleteSelection(it) &&
-                    (it.controller ?: ElectricityController.C) == _selectedController.value
-            }
-            ?: history.firstOrNull {
-                isCompleteSelection(it.selection) &&
-                    (it.selection.controller ?: ElectricityController.C) == _selectedController.value
-            }?.selection
-        if (lastSelection != null) {
-            Log.d("ElectricityDepositViewModel", "选择从缓存恢复")
-            loadAndRestoreSelection(lastSelection)
-        } else {
-            fetchInitialOptions()
-        }
         viewModelScope.launch {
             _presetCandidates.value = presets.rank(SemanticDomain.ELECTRICITY)
+        }
+        viewModelScope.launch {
+            // 自定义模式下电控类型由后端固定（feeitemid=221），界面不再暴露入口，
+            // 统一用需要校区的 C 以保证校区级联存在；同时只恢复同为自定义模式的缓存选择，
+            // 避免把原有系统的房间带进新数据源。
+            val custom = campusCardMode.campusCardProvider.first() == CampusCardProvider.CUSTOM
+            if (custom && _selectedController.value != ElectricityController.C) {
+                _selectedController.value = ElectricityController.C
+                source.saveController(ElectricityController.C)
+            }
+            if (custom) {
+                // 最近房间列表只保留自定义数据源自己的记录。
+                _historyOptions.value = history.filter {
+                    (it.selection.controller ?: ElectricityController.C) == ElectricityController.C
+                }
+            }
+            val preferredController =
+                if (custom) ElectricityController.C else _selectedController.value
+            val lastSelection = source.roomSelection()
+                ?.takeIf {
+                    isCompleteSelection(it) &&
+                        (it.controller ?: ElectricityController.C) == preferredController
+                }
+                ?: history.firstOrNull {
+                    isCompleteSelection(it.selection) &&
+                        (it.selection.controller ?: ElectricityController.C) == preferredController
+                }?.selection
+            if (lastSelection != null) {
+                Log.d("ElectricityDepositViewModel", "选择从缓存恢复")
+                loadAndRestoreSelection(lastSelection)
+            } else {
+                fetchInitialOptions()
+            }
         }
     }
 
     private fun loadAndRestoreSelection(selection: RoomSelectionInfo, commitPresetOnRoomRequest: Boolean = false) {
+        if (isCustomProvider.value &&
+            (selection.controller ?: ElectricityController.C) != ElectricityController.C
+        ) {
+            // 自定义模式只认自己的房间，避免把原有系统的房间带进新数据源。
+            return
+        }
         selectionLoadJob?.cancel()
         // 切换后必须重新取得当前房间详情，查询失败时不能沿用上一房间的支付参数。
         _fullRoomDetails.value = null

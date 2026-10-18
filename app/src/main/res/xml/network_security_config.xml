@@ -6,4 +6,11 @@
         <domain includeSubdomains="false">127.0.0.1</domain>
         <domain includeSubdomains="false">localhost</domain>
     </domain-config>
+    <!--
+        用户自定义一卡通服务（可选数据源）只提供明文 HTTP。
+        仅对该固定域开放明文，base-config 仍保持禁止，避免放开全局明文流量。
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">ykt.hfue.edu.cn</domain>
+    </domain-config>
 </network-security-config>

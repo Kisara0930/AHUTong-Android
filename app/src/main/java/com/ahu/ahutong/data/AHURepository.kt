@@ -6,7 +6,9 @@ import com.ahu.ahutong.core.common.map
 import com.ahu.ahutong.data.model.LoginOutcome
 import android.util.Log
 import com.ahu.ahutong.data.base.BaseDataSource
+import com.ahu.ahutong.data.crawler.CampusCardProviderAccess
 import com.ahu.ahutong.data.crawler.CrawlerDataSource
+import com.ahu.ahutong.data.crawler.CustomCampusCardBackend
 import com.ahu.ahutong.data.crawler.SdkDataSource
 import com.ahu.ahutong.data.crawler.api.adwmh.AdwmhApi
 import com.ahu.ahutong.data.crawler.api.jwxt.JwxtApi
@@ -331,6 +333,9 @@ object AHURepository {
      *  获取余额
      */
     suspend fun getCardMoney() = withContext(Dispatchers.IO) {
+        if (CampusCardProviderAccess.isCustom()) {
+            return@withContext CustomCampusCardBackend.balance()
+        }
         try {
             dataSource.getCardMoney()
         } catch (e: Exception) {
@@ -674,6 +679,9 @@ object AHURepository {
         type: Int? = null
     ): AhuResult<TurnoverPage> =
         withContext(Dispatchers.IO) {
+            if (CampusCardProviderAccess.isCustom()) {
+                return@withContext CustomCampusCardBackend.billPage(page, size, timeFrom, timeTo, type)
+            }
             if (!ensureYcardCredential()) {
                 return@withContext ycardCredentialNotReadyResponse()
             }
@@ -682,6 +690,9 @@ object AHURepository {
 
     suspend fun getBillSummary(timeFrom: String, timeTo: String): AhuResult<TurnoverCount> =
         withContext(Dispatchers.IO) {
+            if (CampusCardProviderAccess.isCustom()) {
+                return@withContext CustomCampusCardBackend.billSummary(timeFrom, timeTo)
+            }
             if (!ensureYcardCredential()) {
                 return@withContext ycardCredentialNotReadyResponse()
             }

@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ahu.ahutong.R
 import com.ahu.ahutong.data.dao.AHUCache
 import com.ahu.ahutong.data.dao.PreferencesManager
+import com.ahu.ahutong.data.model.CampusCardProvider
 import com.ahu.ahutong.ui.shape.SmoothRoundedCornerShape
 import com.ahu.ahutong.ui.state.DiscoveryViewModel
 import com.ahu.ahutong.personalization.prefetch.PaymentQrCommandEntryPoint
@@ -106,6 +107,10 @@ fun CampusCard(
         ).behaviorPredictionRuntime()
     }
     val pref by preferencesManager.showQRCode.collectAsState(initial = false)
+    val campusCardProvider by preferencesManager.campusCardProvider
+        .collectAsState(initial = CampusCardProvider.AHU)
+    // 自定义校园卡数据源只做查询：付款码属于原有系统，这里收敛掉。
+    val isCustomProvider = campusCardProvider == CampusCardProvider.CUSTOM
 
     var isQrcode by remember { mutableStateOf(false) }
     val paymentQrCommand by paymentQrCommands.command.collectAsState()
@@ -120,13 +125,14 @@ fun CampusCard(
         isPaymentQrVisible = isQrcode
     )
 
-    LaunchedEffect(pref, enabled) {
+    LaunchedEffect(pref, enabled, isCustomProvider) {
         // This is an explicit display preference, independent of prediction startup.
-        isQrcode = pref && enabled && SessionStore.isLoggedIn()
+        isQrcode = pref && enabled && !isCustomProvider && SessionStore.isLoggedIn()
     }
 
-    LaunchedEffect(paymentQrCommand?.commandId) {
+    LaunchedEffect(paymentQrCommand?.commandId, isCustomProvider) {
         val command = paymentQrCommand ?: return@LaunchedEffect
+        if (isCustomProvider) return@LaunchedEffect
         if (paymentQrCommands.consume(command.commandId) != null) isQrcode = true
     }
 
@@ -176,6 +182,7 @@ fun CampusCard(
                     },
                     navController = navController,
                     enabled = enabled,
+                    customMode = isCustomProvider,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(78.dp)
@@ -195,8 +202,14 @@ private fun CardView(
     onClick: () -> Unit,
     navController: NavController,
     enabled: Boolean,
+    customMode: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // 自定义模式下隐藏校园卡充值入口（该服务只做查询）。
+    val actions = buildList {
+        add(Triple(R.drawable.ic_card_billing, "账单", "billing"))
+        if (!customMode) add(Triple(R.drawable.ic_income, "充值", "card_balance_deposit"))
+    }
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -207,7 +220,7 @@ private fun CardView(
                 .fillMaxHeight()
                 .weight(1f)
                 .then(
-                    if (enabled) {
+                    if (enabled && !customMode) {
                         Modifier.clickable { onClick() }
                     } else {
                         Modifier
@@ -250,10 +263,7 @@ private fun CardView(
                 .fillMaxHeight()
                 .width(84.dp)
         ) {
-            listOf(
-                Triple(R.drawable.ic_card_billing, "账单", "billing"),
-                Triple(R.drawable.ic_income, "充值", "card_balance_deposit")
-            ).forEachIndexed { index, (iconId, label, route) ->
+            actions.forEachIndexed { index, (iconId, label, route) ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -280,7 +290,7 @@ private fun CardView(
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
-                if (index == 0) {
+                if (index < actions.lastIndex) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()

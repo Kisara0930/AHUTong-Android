@@ -2,7 +2,9 @@ package com.ahu.ahutong.core.storage
 
 import com.ahu.ahutong.data.model.AppThemeMode
 import com.ahu.ahutong.data.model.AppUiTheme
+import com.ahu.ahutong.data.model.CampusCardProvider
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * 用户设置的唯一读写入口（计划 §3.2 的 SettingsStore，ADR 0003 的第一档）。
@@ -15,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
  * （showQRCode、courseReminderEnabled……），泛化成键值对会把它们全部改写，
  * 而收益只是「少写一个文件」。设置的语义在这里，键名与默认值留给实现。
  */
-interface SettingsStore {
+interface SettingsStore : CampusCardModeSetting {
 
     fun getStartupThemePreferences(): StartupThemePreferences?
 
@@ -60,6 +62,15 @@ interface SettingsStore {
 
     val repositoryAccelerationSource: Flow<String>
     suspend fun setRepositoryAccelerationSource(value: String)
+
+    // ── 校园卡数据源：原有（安大）与用户自定义 API 共存，设置页切换 ──
+
+    suspend fun setCampusCardProvider(value: CampusCardProvider) {}
+
+    /** 自定义 API 的账号（非机密，可回显）。密码走 CredentialVault，绝不落到 DataStore。 */
+    val campusCardCustomAccount: Flow<String?>
+        get() = flowOf(null)
+    suspend fun setCampusCardCustomAccount(value: String?) {}
 
     // ── 个性化与遥测的开关：它们同样是用户设置，只是名字里带领域词汇 ──
 

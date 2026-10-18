@@ -13,5 +13,15 @@ interface CredentialVault {
     fun wisdomPassword(): String?
 
     fun clearWisdomPassword()
+
+    /**
+     * 自定义校园卡 API 的密码（与统一认证密码是两回事，不能混用）。
+     * 给默认空实现，保证既有 fake 不被破坏；生产实现是 :app 的 SecureCredentialVault。
+     */
+    fun saveCampusCardPassword(password: String) {}
+
+    fun campusCardPassword(): String? = null
+
+    fun clearCampusCardPassword() {}
 }
 
