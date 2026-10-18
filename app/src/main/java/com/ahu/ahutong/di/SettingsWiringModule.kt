@@ -2,8 +2,10 @@ package com.ahu.ahutong.di
 
 import com.ahu.ahutong.core.storage.SettingsStore
 import com.ahu.ahutong.core.storage.CampusCardModeSetting
+import com.ahu.ahutong.core.storage.CampusCardSessionControl
 import com.ahu.ahutong.core.storage.PaymentKeyboardSetting
 import com.ahu.ahutong.core.storage.CourseReminderSettings
+import com.ahu.ahutong.data.crawler.CustomCampusCardSessionControl
 import com.ahu.ahutong.data.dao.PreferencesManager
 import com.ahu.ahutong.personalization.settings.BehaviorPredictionSettings
 import com.ahu.ahutong.personalization.settings.PersonalizationSettings
@@ -13,11 +15,15 @@ import com.ahu.ahutong.core.common.CourseReminderControl
 import com.ahu.ahutong.ui.state.AppDataReset
 import com.ahu.ahutong.ui.state.AppUpdateGateway
 import com.ahu.ahutong.ui.state.DeviceDataReset
+import com.ahu.ahutong.ui.state.SettingsDispatcher
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 
 /**
  * 设置 feature 的接线：接口在 :core:storage 与 :data:personalization，实现留在 :app。
@@ -45,6 +51,13 @@ abstract class SettingsWiringModule {
     abstract fun bindCampusCardModeSetting(
         implementation: PreferencesManager
     ): CampusCardModeSetting
+
+    /** 切源/改密/清凭据后要作废内存会话：设置 feature 只见"让它失效"，实现留在 :app。 */
+    @Binds
+    @Singleton
+    abstract fun bindCampusCardSessionControl(
+        implementation: CustomCampusCardSessionControl
+    ): CampusCardSessionControl
 
     /** 后台只问两条提醒设置：同一条设置，窄的一种问法。 */
     @Binds
@@ -77,4 +90,12 @@ abstract class SettingsWiringModule {
     abstract fun bindAppUpdateGateway(
         implementation: AndroidAppUpdateGateway
     ): AppUpdateGateway
+
+    companion object {
+
+        /** 设置 feature 只要求"一个 IO 调度器"，具体是谁由组合根决定。 */
+        @Provides
+        @SettingsDispatcher
+        fun provideSettingsDispatcher(): CoroutineDispatcher = Dispatchers.IO
+    }
 }

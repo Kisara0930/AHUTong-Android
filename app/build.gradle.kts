@@ -21,6 +21,13 @@ val buglyAppId = providers.gradleProperty("bugly.appId").orNull
     ?: providers.environmentVariable("BUGLY_APP_ID").orNull
     ?: "2c2ccadcad"
 
+// 自定义一卡通网关的 OAuth Basic 客户端凭据：Synjones 平台的厂商默认值，属客户端公开标识。
+// 与 Bugly appid 同一取向——不散落在源码里，默认值随仓库提供，可用
+// -PcampusCard.basicAuth=... 或环境变量 CAMPUS_CARD_BASIC_AUTH 覆盖。
+val campusCardBasicAuth = providers.gradleProperty("campusCard.basicAuth").orNull
+    ?: providers.environmentVariable("CAMPUS_CARD_BASIC_AUTH").orNull
+    ?: "Basic bW9iaWxlX3NlcnZpY2VfcGxhdGZvcm06bW9iaWxlX3NlcnZpY2VfcGxhdGZvcm1fc2VjcmV0"
+
 sentry {
     org.set("openahu")
     projectName.set("ahutong-android")
@@ -82,6 +89,7 @@ android {
         versionName = "3.4.2"
         buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
         buildConfigField("String", "BUGLY_APP_ID", "\"$buglyAppId\"")
+        buildConfigField("String", "CAMPUS_CARD_BASIC_AUTH", "\"$campusCardBasicAuth\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += listOf("arm64-v8a")

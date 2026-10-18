@@ -29,6 +29,10 @@ data class CustomBalanceResponse(
 )
 
 data class CustomBalanceItem(
-    /** 电子账户余额，单位：分。 */
-    @SerializedName("elec_accamt") val elecAccAmt: Long = 0
+    /**
+     * 电子账户余额，单位：分。
+     * 可空：上游改字段名时不能静默当成 0（对一张能消费的卡，错误的 0 比报错更危险），
+     * 由调用方转成协议变更错误。
+     */
+    @SerializedName("elec_accamt") val elecAccAmt: Long? = null
 )

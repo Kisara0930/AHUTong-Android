@@ -128,7 +128,8 @@ fun ElectricityDeposit(
         }
     }
 
-    val canPay = !isCustomProvider &&
+    // 未知（null）时按"不可缴费"处理：等设置落地后再放开，宁可晚一帧也不误开。
+    val canPay = isCustomProvider == false &&
         (!selectedController.requiresCampus || selectedCampus != null) &&
         selectedBuilding != null && selectedFloor != null && selectedRoom != null &&
         fullRoomDetails != null &&
@@ -241,7 +242,7 @@ fun ElectricityDeposit(
             ) {
                 Text(if (payState is PayState.InProgress) "正在支付" else "确认缴费")
             }
-            if (isCustomProvider) {
+            if (isCustomProvider == true) {
                 Text(
                     text = "自定义校园卡模式仅支持查询，暂不支持缴费。",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -556,7 +557,7 @@ private fun ElectricityRoomSelectors(viewModel: ElectricityDepositViewModel) {
         else -> ElectricitySelectorLevel.Room
     }
     val selectorContent: @Composable ColumnScope.() -> Unit = {
-        if (!isCustomProvider) {
+        if (isCustomProvider != true) {
             AppSelectField(
                 label = "电控入口",
                 selected = selectedController,

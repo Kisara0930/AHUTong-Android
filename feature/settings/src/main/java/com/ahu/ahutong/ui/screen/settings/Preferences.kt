@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
@@ -43,6 +44,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -113,6 +116,7 @@ fun Preferences(
     val campusCardCustomAccount by viewModel.campusCardCustomAccount.collectAsState()
     val campusCardCustomPasswordSet by viewModel.campusCardCustomPasswordSet.collectAsState()
     var showCampusCardCredentialDialog by remember { mutableStateOf(false) }
+    var showCampusCardCredentialClearConfirm by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -465,6 +469,12 @@ fun Preferences(
                     onValueChange = { passwordInput = it },
                     label = if (campusCardCustomPasswordSet) "密码（留空不修改）" else "密码",
                     modifier = Modifier.fillMaxWidth(),
+                    // PasswordVisualTransformation 只负责打码，不会改变交给输入法的 inputType；
+                    // 不声明 Password 时第三方输入法会按普通文本处理，可能把凭据学进云词库。
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
                     visualTransformation = PasswordVisualTransformation()
                 )
                 Text(
@@ -475,15 +485,28 @@ fun Preferences(
                 )
                 if (campusCardCustomPasswordSet || campusCardCustomAccount.isNotBlank()) {
                     TextButton(
-                        onClick = {
-                            viewModel.clearCampusCardCredentials()
-                            showCampusCardCredentialDialog = false
-                        }
+                        onClick = { showCampusCardCredentialClearConfirm = true }
                     ) {
                         Text("清除已保存的账号密码")
                     }
                 }
             }
+        )
+    }
+
+    if (showCampusCardCredentialClearConfirm) {
+        SettingsConfirmationDialog(
+            title = "清除校园卡账号密码？",
+            message = "将删除已保存的金寨路校园卡账号与密码，并立即失效当前登录状态。" +
+                "下次查询需要重新填写。",
+            confirmLabel = "清除",
+            destructive = true,
+            onConfirm = {
+                viewModel.clearCampusCardCredentials()
+                showCampusCardCredentialClearConfirm = false
+                showCampusCardCredentialDialog = false
+            },
+            onDismiss = { showCampusCardCredentialClearConfirm = false }
         )
     }
 }

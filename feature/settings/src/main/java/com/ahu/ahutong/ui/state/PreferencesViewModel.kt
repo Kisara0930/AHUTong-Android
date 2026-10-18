@@ -12,6 +12,7 @@ import com.ahu.ahutong.data.model.AppThemeMode
 import com.ahu.ahutong.data.model.AppUiTheme
 import com.ahu.ahutong.data.model.CampusCardProvider
 import com.ahu.ahutong.data.session.CredentialVault
+import com.ahu.ahutong.core.storage.CampusCardSessionControl
 import com.ahu.ahutong.personalization.bootstrap.BootstrapContributionStatus
 import com.ahu.ahutong.personalization.recorder.BehaviorRecorder
 import com.ahu.ahutong.personalization.semantic.MutationId
@@ -21,7 +22,7 @@ import com.ahu.ahutong.ui.theme.pack.SlotSource
 import com.ahu.ahutong.ui.theme.pack.parseSlotOverrides
 import com.ahu.ahutong.ui.theme.pack.serializeSlotOverrides
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Qualifier
+
+/** IO 调度器限定符：生产注入 Dispatchers.IO，测试注入测试调度器，让用例完全确定。 */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class SettingsDispatcher
 
 /**
  * 设置页的状态：读写用户设置（[SettingsStore]），并把改动报给个性化层（[PersonalizationSettings]）。
@@ -48,7 +55,9 @@ class PreferencesViewModel @Inject constructor(
     private val reminders: CourseReminderControl,
     private val repository: RepositoryIndex,
     private val behavior: BehaviorRecorder,
-    private val credentials: CredentialVault
+    private val credentials: CredentialVault,
+    private val sessionControl: CampusCardSessionControl,
+    @SettingsDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val startupThemePreferences = settings.getStartupThemePreferences()
@@ -221,7 +230,7 @@ class PreferencesViewModel @Inject constructor(
         }
         viewModelScope.launch {
             // Keystore 读取是阻塞 I/O，挪到 IO 线程，避免影响首帧。
-            _campusCardCustomPasswordSet.value = withContext(Dispatchers.IO) {
+            _campusCardCustomPasswordSet.value = withContext(ioDispatcher) {
                 credentials.campusCardPassword()?.isNotBlank() == true
             }
         }
@@ -415,6 +424,8 @@ class PreferencesViewModel @Inject constructor(
 
     fun setCampusCardProvider(value: CampusCardProvider) {
         _campusCardProvider.value = value
+        // 切换数据源后旧会话必须立即作废，避免用上一数据源的凭据继续查询。
+        sessionControl.invalidate()
         writeSetting { settings.setCampusCardProvider(value) }
     }
 
@@ -430,17 +441,28 @@ class PreferencesViewModel @Inject constructor(
     fun saveCampusCardCredentials(account: String, password: String) {
         val trimmed = account.trim()
         _campusCardCustomAccount.value = trimmed
+        // 凭据变了先作废旧会话，再用新凭据重新登录。
+        sessionControl.invalidate()
         if (password.isNotBlank()) {
-            credentials.saveCampusCardPassword(password)
             _campusCardCustomPasswordSet.value = true
         }
-        writeSetting { settings.setCampusCardCustomAccount(trimmed.takeIf { it.isNotBlank() }) }
+        viewModelScope.launch {
+            if (password.isNotBlank()) {
+                // Keystore 加密写是阻塞 I/O，与 init 的读取路径保持一致，挪到 IO 线程。
+                withContext(ioDispatcher) { credentials.saveCampusCardPassword(password) }
+            }
+            settings.setCampusCardCustomAccount(trimmed.takeIf { it.isNotBlank() })
+        }
     }
 
     fun clearCampusCardCredentials() {
-        credentials.clearCampusCardPassword()
+        sessionControl.invalidate()
         _campusCardCustomPasswordSet.value = false
-        setCampusCardCustomAccount("")
+        _campusCardCustomAccount.value = ""
+        viewModelScope.launch {
+            withContext(ioDispatcher) { credentials.clearCampusCardPassword() }
+            settings.setCampusCardCustomAccount(null)
+        }
     }
 
     private companion object {

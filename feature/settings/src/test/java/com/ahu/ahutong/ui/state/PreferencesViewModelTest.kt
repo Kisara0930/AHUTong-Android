@@ -14,6 +14,7 @@ import com.ahu.ahutong.testing.FakeCourseReminderControl
 import com.ahu.ahutong.testing.FakeBehaviorRecorder
 import com.ahu.ahutong.testing.FakeRepositoryIndex
 import com.ahu.ahutong.testing.FakeCredentialVault
+import com.ahu.ahutong.testing.FakeCampusCardSessionControl
 import com.ahu.ahutong.testing.FakeSettingsStore
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -58,12 +59,22 @@ class PreferencesViewModelTest {
     private val reminders = FakeCourseReminderControl()
     private val behavior = FakeBehaviorRecorder()
     private val credentials = FakeCredentialVault()
+    private val sessionControl = FakeCampusCardSessionControl()
 
     private fun viewModel(
         store: SettingsStore = FakeSettingsStore(),
         personalization: FakePersonalizationSettings = FakePersonalizationSettings(),
         repository: FakeRepositoryIndex = FakeRepositoryIndex()
-    ) = PreferencesViewModel(store, personalization, reminders, repository, behavior, credentials)
+    ) = PreferencesViewModel(
+        store,
+        personalization,
+        reminders,
+        repository,
+        behavior,
+        credentials,
+        sessionControl,
+        UnconfinedTestDispatcher()
+    )
 
     @Test
     fun `enabling waits for storage before scheduling and a following disable wins`() = runTest {
@@ -298,6 +309,8 @@ class PreferencesViewModelTest {
 
         assertEquals(CampusCardProvider.CUSTOM, store.campusCardProvider.value)
         assertEquals(CampusCardProvider.CUSTOM, viewModel.campusCardProvider.value)
+        // 切换数据源必须作废内存会话，避免继续用上一数据源的凭据查询。
+        assertEquals(1, sessionControl.invalidateCount)
     }
 
     @Test
@@ -310,6 +323,8 @@ class PreferencesViewModelTest {
         assertEquals("20210001", store.campusCardCustomAccount.value)
         assertEquals("secret", credentials.campusCardPassword)
         assertTrue(viewModel.campusCardCustomPasswordSet.value)
+        // 凭据变化必须作废旧会话。
+        assertEquals(1, sessionControl.invalidateCount)
     }
 
     @Test
@@ -322,6 +337,7 @@ class PreferencesViewModelTest {
 
         assertEquals("20210002", store.campusCardCustomAccount.value)
         assertEquals("keep-me", credentials.campusCardPassword)
+        assertEquals(1, sessionControl.invalidateCount)
     }
 
     @Test
@@ -335,5 +351,6 @@ class PreferencesViewModelTest {
         assertNull(credentials.campusCardPassword)
         assertNull(store.campusCardCustomAccount.value)
         assertFalse(viewModel.campusCardCustomPasswordSet.value)
+        assertEquals(1, sessionControl.invalidateCount)
     }
 }

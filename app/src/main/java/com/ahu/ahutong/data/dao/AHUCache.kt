@@ -5,6 +5,7 @@ import com.ahu.ahutong.BuildConfig
 import com.ahu.ahutong.data.crawler.model.adwnh.CampusItem
 import com.ahu.ahutong.data.crawler.model.adwnh.LostFoundItem
 import com.ahu.ahutong.data.crawler.model.adwnh.LostFoundTypeItem
+import com.ahu.ahutong.data.model.CampusCardProvider
 import com.ahu.ahutong.data.model.Course
 import com.ahu.ahutong.data.model.ElectricityChargeInfo
 import com.ahu.ahutong.data.model.ElectricityController
@@ -852,24 +853,32 @@ object AHUCache {
     }
 
     /**
-     * 保存一卡通余额
+     * 保存一卡通余额。按数据源分离缓存键，避免两套系统的金额互相覆盖、切回后错误回显。
      * @param balance Double
+     * @param provider CampusCardProvider 余额来自哪套数据源
      */
-    fun saveCardBalance(balance: Double) {
-        userPutString("card_balance", balance.toString())
+    fun saveCardBalance(balance: Double, provider: CampusCardProvider = CampusCardProvider.AHU) {
+        userPutString(cardBalanceKey(provider), balance.toString())
     }
 
     /**
-     * 获取一卡通余额
+     * 获取指定数据源的已缓存一卡通余额。
      * @return Double?
      */
-    fun getCardBalance(): Double? {
-        userGetString("card_balance")?.toDoubleOrNull()?.let { return it }
-        if (!kv.containsKey("card_balance")) return null
-        return kv.decodeDouble("card_balance").also {
-            userPutString("card_balance", it.toString())
+    fun getCardBalance(provider: CampusCardProvider = CampusCardProvider.AHU): Double? {
+        val key = cardBalanceKey(provider)
+        userGetString(key)?.toDoubleOrNull()?.let { return it }
+        if (!kv.containsKey(key)) return null
+        return kv.decodeDouble(key).also {
+            userPutString(key, it.toString())
         }
     }
+
+    /**
+     * 余额缓存键：安大沿用旧键，兼容升级前已缓存的余额；自定义数据源单开一键。
+     */
+    private fun cardBalanceKey(provider: CampusCardProvider): String =
+        if (provider == CampusCardProvider.CUSTOM) "card_balance_custom" else "card_balance"
 
     fun getMockData(): Boolean {
         if (!BuildConfig.DEBUG) {

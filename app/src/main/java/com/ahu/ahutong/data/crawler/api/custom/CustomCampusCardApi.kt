@@ -1,5 +1,6 @@
 package com.ahu.ahutong.data.crawler.api.custom
 
+import com.ahu.ahutong.BuildConfig
 import com.ahu.ahutong.data.crawler.model.ycard.TurnoverCountResponse
 import com.ahu.ahutong.data.crawler.model.ycard.TurnoverResponse
 import com.ahu.ahutong.data.network.AhuHttp
@@ -108,8 +109,8 @@ interface CustomCampusCardApi {
             "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 " +
                 "(KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36"
 
-        private const val BASIC =
-            "Basic bW9iaWxlX3NlcnZpY2VfcGxhdGZvcm06bW9iaWxlX3NlcnZpY2VfcGxhdGZvcm1fc2VjcmV0"
+        /** 厂商默认客户端凭据，见 app/build.gradle.kts 的 buildConfigField 覆盖说明。 */
+        private val BASIC: String = BuildConfig.CAMPUS_CARD_BASIC_AUTH
 
         private val loggingInterceptor = NetworkLogging.debugInterceptor()
 
@@ -152,10 +153,12 @@ interface CustomCampusCardApi {
             }
             val first = API.request()
             if (first.code() != 401 && first.code() != 403) return first
-            first.errorBody()?.close()
             if (CustomCampusCardSession.refreshAfterUnauthorized(attempted).isNullOrBlank()) {
+                // 刷新失败：原样返回 first（含未关闭的 errorBody），交给调用方决定如何处理。
                 return first
             }
+            // 只有在确实要丢弃 first 去重放时，才关闭它的响应体。
+            first.errorBody()?.close()
             return API.request()
         }
 

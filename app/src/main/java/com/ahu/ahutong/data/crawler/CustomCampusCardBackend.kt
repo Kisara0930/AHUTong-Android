@@ -60,7 +60,9 @@ object CustomCampusCardBackend {
         }
         val item = body.data?.firstOrNull()
             ?: return@guard AhuResult.Failure(AhuError.Server(-1, "该账号没有可用校园卡账户"))
-        AhuResult.Success(Card().apply { balance = item.elecAccAmt / 100.0 })
+        val balanceCents = item.elecAccAmt
+            ?: return@guard protocolFailure("余额字段缺失，上游服务可能已改版")
+        AhuResult.Success(Card().apply { balance = balanceCents / 100.0 })
     }
 
     // ── 账单 ─────────────────────────────────────────────────────────────

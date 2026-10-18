@@ -8,8 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ahu.ahutong.core.storage.CampusCardModeSetting
 import com.ahu.ahutong.data.AHURepository
 import com.ahu.ahutong.data.dao.AHUCache
+import com.ahu.ahutong.data.model.CampusCardProvider
 import com.ahu.ahutong.ext.launchSafe
 import com.ahu.ahutong.data.payment.PaymentQrRepository
 import com.ahu.ahutong.data.payment.PaymentQrOwner
@@ -28,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,7 +48,8 @@ import com.ahu.ahutong.core.common.onSuccess
 class DiscoveryViewModel @Inject constructor(
     private val paymentQrRepository: PaymentQrRepository,
     private val behaviorRuntime: BehaviorPredictionRuntime,
-    private val session: AhuSession
+    private val session: AhuSession,
+    private val campusCardMode: CampusCardModeSetting
 ) : ViewModel() {
 
     val TAG = DiscoveryViewModel::class.java.simpleName
@@ -53,6 +57,13 @@ class DiscoveryViewModel @Inject constructor(
     val bathroom = mutableStateMapOf<String, String>()
     var balance by mutableStateOf(0.0)
     var transitionBalance by mutableStateOf(0.0)
+
+    /**
+     * 当前数据源。初值未知（null）：首帧按安大读缓存，等设置落地后如果其实是自定义数据源，
+     * 会走一次切源重置，清掉上一数据源的余额再读新数据源自己的缓存。
+     */
+    @Volatile
+    private var cardProvider: CampusCardProvider? = null
 
     val qrcode = MutableStateFlow<Bitmap?>(null)
     val state = MutableStateFlow(false)
@@ -65,6 +76,21 @@ class DiscoveryViewModel @Inject constructor(
     private var qrRenderFailed = false
 
     init {
+        viewModelScope.launch {
+            campusCardMode.campusCardProvider.collect { provider ->
+                // 首帧按安大读缓存，因此这里的"上一个"缺省按安大算：若真实数据源是自定义，
+                // 第一次落地也要重置，否则自定义用户会一直看到安大缓存的余额。
+                val previous = cardProvider ?: CampusCardProvider.AHU
+                if (previous == provider) {
+                    cardProvider = provider
+                    return@collect
+                }
+                cardProvider = provider
+                // 切换数据源后内存里仍是上一数据源的余额：必须立刻清掉再读新数据源自己的缓存，
+                // 否则首页会显示别校/别系统的金额，且在没有下一次成功请求前无法纠正。
+                resetCachedBalance(provider)
+            }
+        }
         viewModelScope.launch {
             session.state.collectLatest { status ->
                 if (status == AhuSessionState.Status.Anonymous && paymentQrRepository.currentOwner() == null) {
@@ -118,9 +144,10 @@ class DiscoveryViewModel @Inject constructor(
 
     fun loadActivityBean() {
         preparePaymentQr()
+        val requestProvider = currentProvider()
         // 优先加载缓存
         if (!AHUCache.getMockData()) {
-            AHUCache.getCardBalance()?.let {
+            AHUCache.getCardBalance(requestProvider)?.let {
                 balance = it
             }
         }
@@ -133,7 +160,9 @@ class DiscoveryViewModel @Inject constructor(
                 card.await() to bathrooms.await()
             }
             cardResult.onSuccess {
-                applyCardBalance(it.balance, it.transitionBalance)
+                // 期间切了数据源就丢弃这次结果：否则会把上一数据源的余额写进当前数据源。
+                if (currentProvider() != requestProvider) return@onSuccess
+                applyCardBalance(it.balance, it.transitionBalance, requestProvider)
             }
             bathroomResult.onSuccess {
                 bathroom.clear()
@@ -145,8 +174,9 @@ class DiscoveryViewModel @Inject constructor(
     }
 
     fun refreshCardBalance() {
+        val requestProvider = currentProvider()
         if (!AHUCache.getMockData()) {
-            AHUCache.getCardBalance()?.let {
+            AHUCache.getCardBalance(requestProvider)?.let {
                 balance = it
             }
         }
@@ -154,16 +184,36 @@ class DiscoveryViewModel @Inject constructor(
         viewModelScope.launchSafe {
             qrWarmJob?.join()
             AHURepository.getCardMoney().onSuccess {
-                applyCardBalance(it.balance, it.transitionBalance)
+                if (currentProvider() != requestProvider) return@onSuccess
+                applyCardBalance(it.balance, it.transitionBalance, requestProvider)
             }
         }
     }
 
-    private fun applyCardBalance(balanceValue: Double?, transitionBalanceValue: Double?) {
+    private fun currentProvider(): CampusCardProvider = cardProvider ?: CampusCardProvider.AHU
+
+    /** 切源时清掉内存里的上一数据源余额，并用当前数据源自己的缓存重建。 */
+    private fun resetCachedBalance(provider: CampusCardProvider) {
+        transitionBalance = 0.0
+        balance = if (AHUCache.getMockData()) 0.0 else AHUCache.getCardBalance(provider) ?: 0.0
+    }
+
+    private fun applyCardBalance(
+        balanceValue: Double?,
+        transitionBalanceValue: Double?,
+        provider: CampusCardProvider
+    ) {
         val newBalance = balanceValue ?: 0.0
         balance = newBalance
-        AHUCache.saveCardBalance(newBalance)
-        transitionBalance = transitionBalanceValue ?: transitionBalance
+        AHUCache.saveCardBalance(newBalance, provider)
+        // 自定义数据源没有"在途金额"概念：显式清空，避免沿用上一数据源的在途金额并排显示。
+        transitionBalance = if (provider == CampusCardProvider.CUSTOM) {
+            0.0
+        } else {
+            transitionBalanceValue ?: transitionBalance
+        }
+        // 自定义数据源的余额不属于本应用的个性化画像：跳过余额桶写入，避免污染行为画像。
+        if (provider == CampusCardProvider.CUSTOM) return
         behaviorRuntime.onBusinessContextChanged(
             newBalanceBucket = when {
                 newBalance < 5.0 -> BalanceBucket.ZERO_TO_FIVE

@@ -68,11 +68,12 @@ class ElectricityDepositViewModel @Inject constructor(
 
     /**
      * 自定义校园卡模式：电控类型固定为后端内置项，界面隐藏入口；缴费同样不可用。
-     * 初值 false，真实值在 init 的协程里落地，避免首帧闪烁。
+     * 初值 null 表示"设置还没读出来"：未知态不渲染入口、不可缴费，避免自定义模式下
+     * 首帧闪现原有系统的电控入口或短暂打开缴费。真实值在 init 的协程里落地。
      */
-    val isCustomProvider: StateFlow<Boolean> = campusCardMode.campusCardProvider
-        .map { it == CampusCardProvider.CUSTOM }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val isCustomProvider: StateFlow<Boolean?> = campusCardMode.campusCardProvider
+        .map<CampusCardProvider, Boolean?> { it == CampusCardProvider.CUSTOM }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val alertConfiguration: StateFlow<ElectricityAlertConfiguration> = alertSettings.configuration
         .stateIn(viewModelScope, SharingStarted.Eagerly, ElectricityAlertConfiguration())
@@ -203,15 +204,19 @@ class ElectricityDepositViewModel @Inject constructor(
                 }?.selection
             if (lastSelection != null) {
                 Log.d("ElectricityDepositViewModel", "选择从缓存恢复")
-                loadAndRestoreSelection(lastSelection)
+                loadAndRestoreSelection(lastSelection, custom)
             } else {
                 fetchInitialOptions()
             }
         }
     }
 
-    private fun loadAndRestoreSelection(selection: RoomSelectionInfo, commitPresetOnRoomRequest: Boolean = false) {
-        if (isCustomProvider.value &&
+    private fun loadAndRestoreSelection(
+        selection: RoomSelectionInfo,
+        custom: Boolean = isCustomProvider.value == true,
+        commitPresetOnRoomRequest: Boolean = false
+    ) {
+        if (custom &&
             (selection.controller ?: ElectricityController.C) != ElectricityController.C
         ) {
             // 自定义模式只认自己的房间，避免把原有系统的房间带进新数据源。

@@ -2,6 +2,7 @@ package com.ahu.ahutong.testing
 
 import com.ahu.ahutong.core.storage.SettingsStore
 import com.ahu.ahutong.core.storage.StartupThemePreferences
+import com.ahu.ahutong.core.storage.CampusCardSessionControl
 import com.ahu.ahutong.data.model.AppThemeMode
 import com.ahu.ahutong.data.model.AppUiTheme
 import com.ahu.ahutong.data.model.CampusCardProvider
@@ -282,7 +283,6 @@ class FakeAppDataReset : AppDataReset {
 
 /** 只记内存的凭据保险箱 fake：自定义校园卡密码。 */
 open class FakeCredentialVault(var campusCardPassword: String? = null) : CredentialVault {
-
     override fun saveWisdomPassword(password: String) = Unit
 
     override fun wisdomPassword(): String? = null
@@ -297,6 +297,17 @@ open class FakeCredentialVault(var campusCardPassword: String? = null) : Credent
 
     override fun clearCampusCardPassword() {
         campusCardPassword = null
+    }
+}
+
+/** [CampusCardSessionControl] 的 fake：只记下失效次数。 */
+class FakeCampusCardSessionControl : CampusCardSessionControl {
+
+    var invalidateCount = 0
+        private set
+
+    override fun invalidate() {
+        invalidateCount++
     }
 }
 

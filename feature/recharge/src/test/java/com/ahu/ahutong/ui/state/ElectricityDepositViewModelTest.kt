@@ -239,11 +239,36 @@ class ElectricityDepositViewModelTest {
         )
         advanceUntilIdle()
 
-        assertTrue(subject.isCustomProvider.value)
+        assertEquals(true, subject.isCustomProvider.value)
         assertEquals(ElectricityController.C, subject.selectedController.value)
         // 原有系统的房间不会出现在「最近使用的房间」里。
         assertEquals(listOf(customRoom), subject.historyOptions.value.map { it.selection })
         assertEquals(ElectricityController.C, source.roomQueries.last().first)
+    }
+
+    @Test
+    fun `the provider stays unknown until the setting lands`() = runTest(dispatcher) {
+        val source = FakeElectricityDepositSource(
+            controller = ElectricityController.C,
+            selection = null,
+            optionsResult = AhuResult.Success(emptyList()),
+            roomResult = AhuResult.Success(room()),
+            payResult = AhuResult.Success(RechargeReceipt("order-1"))
+        )
+        val subject = ElectricityDepositViewModel(
+            source, FakeBehaviorRecorder(), EmptyPresetSuggestions,
+            FakePaymentKeyboardSetting(), FakeElectricityAlertSettings(),
+            FakeCampusCardModeSetting(CampusCardProvider.CUSTOM)
+        )
+
+        // 设置还没读出来时是"未知"（null）：界面据此不渲染电控入口、不允许缴费，
+        // 避免自定义模式首帧闪现原有系统的入口或短暂打开缴费。
+        assertNull(subject.isCustomProvider.value)
+
+        advanceUntilIdle()
+
+        assertEquals(true, subject.isCustomProvider.value)
+        assertEquals(ElectricityController.C, subject.selectedController.value)
     }
 
     private fun viewModel(

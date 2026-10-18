@@ -74,5 +74,5 @@
 
 - 单 Gradle 模块 `:app`；`app/src/main/java` 292 文件 / 67,075 行；JVM 单测 53 个文件。
 - 已存在的真实接缝：`data/base/BaseDataSource`（适配器：`CrawlerDataSource`、`SdkDataSource`、mock）。
-- 已做对的安全设施：`data/security/SecureStorage`（AES-GCM + Keystore，fail-closed）、`EncryptedCookiePersistor`、更新包签名指纹校验、`network_security_config` 仅放行 loopback 明文。
+- 已做对的安全设施：`data/security/SecureStorage`（AES-GCM + Keystore，fail-closed）、`EncryptedCookiePersistor`、更新包签名指纹校验、`network_security_config` 仅在白名单内放行明文（回环桥 `127.0.0.1`/`localhost`，以及自定义一卡通端点 `ykt.hfue.edu.cn`——该校上游不提供 TLS，属已知并登记的例外，`NetworkSecurityConfigTest` 钉住白名单恰好两条）。
 - 已知全局状态：`AHUApplication.getApp()`（20 处引用）、`AHUApplication.sessionExpired`（6 处）、`reLoginMutex`（声明后未使用）。
