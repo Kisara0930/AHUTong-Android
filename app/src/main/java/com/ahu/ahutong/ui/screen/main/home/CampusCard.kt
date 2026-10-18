@@ -108,9 +108,13 @@ fun CampusCard(
     }
     val pref by preferencesManager.showQRCode.collectAsState(initial = false)
     val campusCardProvider by preferencesManager.campusCardProvider
-        .collectAsState(initial = CampusCardProvider.AHU)
-    // 自定义校园卡数据源只做查询：付款码属于原有系统，这里收敛掉。
-    val isCustomProvider = campusCardProvider == CampusCardProvider.CUSTOM
+        .collectAsState<CampusCardProvider, CampusCardProvider?>(initial = null)
+    // 付款码与充值入口都属于原有系统，自定义数据源一律收敛掉。
+    //
+    // 只有确认是原有数据源才放开：数据源未落地（null）前按"受限"处理，宁可晚一帧也不误开。
+    // 与 ElectricityDepositViewModel 对同一问题的取向保持一致——反之为自定义用户首帧就会
+    // 闪现充值入口，甚至短暂亮起付款码/激活 NFC 守卫。
+    val isOriginalProvider = campusCardProvider == CampusCardProvider.AHU
 
     var isQrcode by remember { mutableStateOf(false) }
     val paymentQrCommand by paymentQrCommands.command.collectAsState()
@@ -125,14 +129,14 @@ fun CampusCard(
         isPaymentQrVisible = isQrcode
     )
 
-    LaunchedEffect(pref, enabled, isCustomProvider) {
+    LaunchedEffect(pref, enabled, isOriginalProvider) {
         // This is an explicit display preference, independent of prediction startup.
-        isQrcode = pref && enabled && !isCustomProvider && SessionStore.isLoggedIn()
+        isQrcode = pref && enabled && isOriginalProvider && SessionStore.isLoggedIn()
     }
 
-    LaunchedEffect(paymentQrCommand?.commandId, isCustomProvider) {
+    LaunchedEffect(paymentQrCommand?.commandId, isOriginalProvider) {
         val command = paymentQrCommand ?: return@LaunchedEffect
-        if (isCustomProvider) return@LaunchedEffect
+        if (!isOriginalProvider) return@LaunchedEffect
         if (paymentQrCommands.consume(command.commandId) != null) isQrcode = true
     }
 
@@ -182,7 +186,7 @@ fun CampusCard(
                     },
                     navController = navController,
                     enabled = enabled,
-                    customMode = isCustomProvider,
+                    queryOnly = !isOriginalProvider,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(78.dp)
@@ -202,13 +206,13 @@ private fun CardView(
     onClick: () -> Unit,
     navController: NavController,
     enabled: Boolean,
-    customMode: Boolean,
+    queryOnly: Boolean,
     modifier: Modifier = Modifier
 ) {
-    // 自定义模式下隐藏校园卡充值入口（该服务只做查询）。
+    // 查询专用模式（自定义数据源，或数据源尚未落地）：隐藏充值入口，该服务只做查询。
     val actions = buildList {
         add(Triple(R.drawable.ic_card_billing, "账单", "billing"))
-        if (!customMode) add(Triple(R.drawable.ic_income, "充值", "card_balance_deposit"))
+        if (!queryOnly) add(Triple(R.drawable.ic_income, "充值", "card_balance_deposit"))
     }
     Row(
         modifier = modifier,
@@ -220,7 +224,7 @@ private fun CardView(
                 .fillMaxHeight()
                 .weight(1f)
                 .then(
-                    if (enabled && !customMode) {
+                    if (enabled && !queryOnly) {
                         Modifier.clickable { onClick() }
                     } else {
                         Modifier

@@ -5,6 +5,7 @@ import com.ahu.ahutong.data.crawler.api.custom.CustomCampusCardApi.Companion.API
 import com.ahu.ahutong.data.dao.PreferencesManager
 import com.ahu.ahutong.data.session.SecureCredentialVault
 import com.google.gson.JsonParser
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -20,6 +21,9 @@ object CustomCampusCardSession {
 
     private val mutex = Mutex()
 
+    /** 会话代际：每次 [clear] 自增，用来让正在进行中的登录/刷新回来时作废。 */
+    private val generation = AtomicLong()
+
     @Volatile
     private var token: String? = null
 
@@ -33,9 +37,34 @@ object CustomCampusCardSession {
 
     fun getToken(): String? = token
 
+    /**
+     * 让当前会话失效。非挂起，因此不能持 [mutex]（那样就没法在设置页直接调用）；
+     * 改用代际计数：在途的登录/刷新返回时代际已变，结果会被丢弃，不会把旧密码换来的
+     * token 写回内存。否则"改密时刚好有登录在飞"会让改密不生效。
+     */
     fun clear() {
+        generation.incrementAndGet()
         token = null
         refreshToken = null
+    }
+
+    /** 当前会话代际，登录开始时记下，提交前比对。 */
+    internal fun currentGeneration(): Long = generation.get()
+
+    /**
+     * 提交一次登录结果：只有代际未变（期间没有 [clear]）时才写回内存，否则丢弃并返回 null。
+     * 抽成函数是为了让"改密丢弃在途登录"这条纯逻辑能在 JVM 单测里被直接覆盖。
+     */
+    internal fun commitLoginResult(
+        startGeneration: Long,
+        accessToken: String,
+        newRefreshToken: String?
+    ): String? {
+        if (generation.get() != startGeneration) return null
+        token = accessToken
+        refreshToken = newRefreshToken
+        lastError = null
+        return accessToken
     }
 
     /** 账密是否都已配置。 */
@@ -63,14 +92,14 @@ object CustomCampusCardSession {
     }
 
     private suspend fun loginWithRefreshLocked(currentRefreshToken: String): String? = try {
+        val startGeneration = currentGeneration()
         val response = API.refresh(refreshToken = currentRefreshToken).execute()
         val body = response.body()
         val accessToken = body?.accessToken?.takeIf { it.isNotBlank() }
         if (response.isSuccessful && accessToken != null) {
-            token = accessToken
-            body.refreshToken?.takeIf { it.isNotBlank() }?.let { refreshToken = it }
-            lastError = null
-            accessToken
+            // 刷新响应通常不回传 refresh_token，缺省时保留原有的，不顺手清掉。
+            val nextRefreshToken = body.refreshToken?.takeIf { it.isNotBlank() } ?: refreshToken
+            commitLoginResult(startGeneration, accessToken, nextRefreshToken)
         } else {
             // 刷新失败不写 lastError：还会退回账密重登，由重登决定最终错误文案。
             null
@@ -80,6 +109,7 @@ object CustomCampusCardSession {
     }
 
     private suspend fun loginLocked(): String? {
+        val startGeneration = currentGeneration()
         val account = readAccount()
         val password = readPassword()
         if (account == null) {
@@ -95,18 +125,19 @@ object CustomCampusCardSession {
             val body = response.body()
             val accessToken = body?.accessToken?.takeIf { it.isNotBlank() }
             if (response.isSuccessful && accessToken != null) {
-                token = accessToken
-                refreshToken = body.refreshToken?.takeIf { it.isNotBlank() }
-                lastError = null
-                accessToken
+                commitLoginResult(startGeneration, accessToken, body.refreshToken?.takeIf { it.isNotBlank() })
             } else {
                 val errorText = response.errorBody()?.string()
-                lastError = extractError(errorText)
-                    ?: "自定义校园卡登录失败（HTTP ${response.code()}）"
+                if (currentGeneration() == startGeneration) {
+                    lastError = extractError(errorText)
+                        ?: "自定义校园卡登录失败（HTTP ${response.code()}）"
+                }
                 null
             }
         } catch (error: Exception) {
-            lastError = "自定义校园卡登录异常：${error.message ?: error.javaClass.simpleName}"
+            if (currentGeneration() == startGeneration) {
+                lastError = "自定义校园卡登录异常：${error.message ?: error.javaClass.simpleName}"
+            }
             null
         }
     }

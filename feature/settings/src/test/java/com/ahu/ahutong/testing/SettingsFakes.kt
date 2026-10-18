@@ -23,6 +23,7 @@ import com.ahu.ahutong.ui.state.AppUpdateGateway
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.io.IOException
 
 /**
  * 设置 feature 的 fake 适配器：内存里的一份设置 + 一份行为上报记录。
@@ -52,6 +53,9 @@ class FakeSettingsStore : SettingsStore {
     override val bootstrapTrainingIncludeHistorical = MutableStateFlow(false)
 
     var startupTheme: StartupThemePreferences? = null
+
+    /** 置 true 后校园卡相关写入抛 IOException（模拟 DataStore 写失败）。 */
+    var failCampusCardWrites = false
 
     var clearAllCount = 0
         private set
@@ -102,10 +106,12 @@ class FakeSettingsStore : SettingsStore {
     }
 
     override suspend fun setCampusCardProvider(value: CampusCardProvider) {
+        if (failCampusCardWrites) throw IOException("datastore write failed")
         campusCardProvider.value = value
     }
 
     override suspend fun setCampusCardCustomAccount(value: String?) {
+        if (failCampusCardWrites) throw IOException("datastore write failed")
         campusCardCustomAccount.value = value
     }
 
@@ -283,6 +289,9 @@ class FakeAppDataReset : AppDataReset {
 
 /** 只记内存的凭据保险箱 fake：自定义校园卡密码。 */
 open class FakeCredentialVault(var campusCardPassword: String? = null) : CredentialVault {
+    /** 置 true 后校园卡密码的写/删抛异常（模拟 Keystore 不可用）。 */
+    var failCampusCardWrites = false
+
     override fun saveWisdomPassword(password: String) = Unit
 
     override fun wisdomPassword(): String? = null
@@ -290,12 +299,14 @@ open class FakeCredentialVault(var campusCardPassword: String? = null) : Credent
     override fun clearWisdomPassword() = Unit
 
     override fun saveCampusCardPassword(password: String) {
+        if (failCampusCardWrites) throw IllegalStateException("keystore unavailable")
         campusCardPassword = password
     }
 
     override fun campusCardPassword(): String? = campusCardPassword
 
     override fun clearCampusCardPassword() {
+        if (failCampusCardWrites) throw IllegalStateException("keystore unavailable")
         campusCardPassword = null
     }
 }

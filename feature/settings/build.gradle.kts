@@ -33,6 +33,15 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    testOptions {
+        unitTests {
+            // 与 :app、:feature:recharge 等保持一致：设置写入路径会经过 android.util.Log，
+            // 默认的 mockable android.jar 会抛 "not mocked"，打开后这些调用是空实现。
+            // 覆盖"写失败要回滚乐观状态"的用例必须让失败分支真正跑到 Log。
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {

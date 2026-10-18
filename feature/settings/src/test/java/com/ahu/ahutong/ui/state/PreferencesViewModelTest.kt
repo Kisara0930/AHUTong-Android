@@ -353,4 +353,47 @@ class PreferencesViewModelTest {
         assertFalse(viewModel.campusCardCustomPasswordSet.value)
         assertEquals(1, sessionControl.invalidateCount)
     }
+
+    @Test
+    fun `a failed provider write rolls the switch back instead of crashing`() {
+        val store = FakeSettingsStore().apply { failCampusCardWrites = true }
+        val viewModel = viewModel(store, FakePersonalizationSettings())
+
+        viewModel.setCampusCardProvider(CampusCardProvider.CUSTOM)
+
+        // 写失败（此前会因未接住 IOException 直接崩）：乐观值必须回落到真实落盘值。
+        assertEquals(CampusCardProvider.AHU, viewModel.campusCardProvider.value)
+        assertEquals(CampusCardProvider.AHU, store.campusCardProvider.value)
+    }
+
+    @Test
+    fun `a failed clear keeps the credential and never claims it was cleared`() {
+        val store = FakeSettingsStore().apply { campusCardCustomAccount.value = "20210001" }
+        credentials.campusCardPassword = "secret"
+        val viewModel = viewModel(store, FakePersonalizationSettings())
+        credentials.failCampusCardWrites = true
+
+        viewModel.clearCampusCardCredentials()
+
+        // 删除失败：密码仍在 Keystore，界面绝不能声称已清除，账号也要保持原值。
+        assertEquals("secret", credentials.campusCardPassword)
+        assertTrue(viewModel.campusCardCustomPasswordSet.value)
+        assertEquals("20210001", viewModel.campusCardCustomAccount.value)
+        assertEquals("20210001", store.campusCardCustomAccount.value)
+    }
+
+    @Test
+    fun `a failed save does not claim the password was stored`() {
+        val store = FakeSettingsStore()
+        val viewModel = viewModel(store, FakePersonalizationSettings())
+        credentials.failCampusCardWrites = true
+
+        viewModel.saveCampusCardCredentials("20210001", "secret")
+
+        // Keystore 写失败：既没有密码，也不能把状态标成"已配置"。
+        assertNull(credentials.campusCardPassword)
+        assertFalse(viewModel.campusCardCustomPasswordSet.value)
+        assertNull(store.campusCardCustomAccount.value)
+        assertEquals("", viewModel.campusCardCustomAccount.value)
+    }
 }

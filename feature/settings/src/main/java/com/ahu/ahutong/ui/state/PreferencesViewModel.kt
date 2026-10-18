@@ -22,6 +22,7 @@ import com.ahu.ahutong.ui.theme.pack.SlotSource
 import com.ahu.ahutong.ui.theme.pack.parseSlotOverrides
 import com.ahu.ahutong.ui.theme.pack.serializeSlotOverrides
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -426,12 +427,12 @@ class PreferencesViewModel @Inject constructor(
         _campusCardProvider.value = value
         // 切换数据源后旧会话必须立即作废，避免用上一数据源的凭据继续查询。
         sessionControl.invalidate()
-        writeSetting { settings.setCampusCardProvider(value) }
+        writeCampusCard { settings.setCampusCardProvider(value) }
     }
 
     fun setCampusCardCustomAccount(value: String) {
         _campusCardCustomAccount.value = value
-        writeSetting { settings.setCampusCardCustomAccount(value.takeIf { it.isNotBlank() }) }
+        writeCampusCard { settings.setCampusCardCustomAccount(value.takeIf { it.isNotBlank() }) }
     }
 
     /**
@@ -443,13 +444,11 @@ class PreferencesViewModel @Inject constructor(
         _campusCardCustomAccount.value = trimmed
         // 凭据变了先作废旧会话，再用新凭据重新登录。
         sessionControl.invalidate()
-        if (password.isNotBlank()) {
-            _campusCardCustomPasswordSet.value = true
-        }
-        viewModelScope.launch {
+        writeCampusCard {
             if (password.isNotBlank()) {
-                // Keystore 加密写是阻塞 I/O，与 init 的读取路径保持一致，挪到 IO 线程。
-                withContext(ioDispatcher) { credentials.saveCampusCardPassword(password) }
+                credentials.saveCampusCardPassword(password)
+                // 只有真正写进 Keystore 之后，才敢声称"密码已配置"。
+                _campusCardCustomPasswordSet.value = true
             }
             settings.setCampusCardCustomAccount(trimmed.takeIf { it.isNotBlank() })
         }
@@ -457,11 +456,47 @@ class PreferencesViewModel @Inject constructor(
 
     fun clearCampusCardCredentials() {
         sessionControl.invalidate()
-        _campusCardCustomPasswordSet.value = false
-        _campusCardCustomAccount.value = ""
-        viewModelScope.launch {
-            withContext(ioDispatcher) { credentials.clearCampusCardPassword() }
+        writeCampusCard {
+            credentials.clearCampusCardPassword()
             settings.setCampusCardCustomAccount(null)
+            // 删成功后才更新界面：删失败却告诉用户"凭据已清除"，是对隐私的错误保证。
+            _campusCardCustomPasswordSet.value = false
+        }
+    }
+
+    /**
+     * 校园卡相关写入（数据源 / 账号 / 密码）的统一出口。
+     *
+     * 与 [writeSetting] 同一考虑：DataStore 的写策略会在连续失败后把 IOException 抛出来，
+     * Keystore 侧的读写也可能失败；而 `viewModelScope` 的上下文里没有异常处理器，
+     * [com.ahu.ahutong.ext.launchSafe] 的全局兜底又只能覆盖走它的调用点——不接住就是崩溃。
+     *
+     * 与 [writeSetting] 的差别是悲观取向：乐观状态只在写入成功后置位，失败则把数据源、
+     * 账号、密码三个状态拉回真实落盘值。"已清除"尤其不能只是界面上的一句话。
+     */
+    private fun writeCampusCard(block: suspend () -> Unit) {
+        viewModelScope.launch {
+            try {
+                withContext(ioDispatcher) { block() }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Log.w(TAG, "campus card write failed", error)
+                rollbackCampusCardState()
+            }
+        }
+    }
+
+    /** 写入失败后，把三个乐观状态恢复成真实落盘值。 */
+    private suspend fun rollbackCampusCardState() {
+        runCatching { _campusCardProvider.value = settings.campusCardProvider.first() }
+        runCatching {
+            _campusCardCustomAccount.value = settings.campusCardCustomAccount.first().orEmpty()
+        }
+        runCatching {
+            _campusCardCustomPasswordSet.value = withContext(ioDispatcher) {
+                credentials.campusCardPassword()?.isNotBlank() == true
+            }
         }
     }
 
